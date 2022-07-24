@@ -1,4 +1,5 @@
 import os
+import shutil
 import json
 import sqlite3
 
@@ -12,8 +13,10 @@ MESSAGE_CONTENT_MAX_LEN = 500
 class Server:
     def __init__(self) -> None:
         self.create_new_server_db()
-        if not os.path.exists("chats"):
-            os.mkdir("chats")
+
+        if os.path.exists("chats"):
+            shutil.rmtree("chats")
+        os.mkdir("chats")
 
 
     def create_new_chat(
@@ -34,7 +37,7 @@ class Server:
         """
 
         self.create_new_chat_history_table(chat_name)
-        self.save_chat_data(chat_name, public_key, members, admins)
+        self.save_new_chat_data(chat_name, public_key, members, admins)
 
     def create_new_user(
         self,
@@ -62,7 +65,7 @@ class Server:
         conn.commit()
 
 
-    def save_chat_data(
+    def save_new_chat_data(
         self,
         chat_name: str,
         public_key: int,
@@ -83,6 +86,7 @@ class Server:
             "public-key": public_key,
             "members": members,
             "admins": admins,
+            "nicknames": {m: m for m in members},
         }
 
         with open(f"chats/{chat_name}.json", "w+") as f:
