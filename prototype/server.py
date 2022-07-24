@@ -2,7 +2,6 @@ import os
 import json
 import sqlite3
 
-from sqlite3 import Error
 from message import Message
 
 
@@ -11,10 +10,11 @@ MESSAGE_CONTENT_MAX_LEN = 500
 
 
 class Server:
-    def __init__(self):
+    def __init__(self) -> None:
         self.create_new_server_db()
         if not os.path.exists("chats"):
             os.mkdir("chats")
+
 
     def create_new_chat(
         self,
@@ -22,9 +22,45 @@ class Server:
         public_key: int,
         members: list[str],
         admins: list[str],
-    ):
+    ) -> None:
+        """
+        Creates a new chat history table and saves the chat data in a JSON file.
+
+        :param chat_name: the sanitised chat name
+        :param public_key: the public key of the chat
+        :param members: the list of usernames of users in the chat
+        :param admins: the list of usernames of users in the chat with admin
+        privileges
+        """
+
         self.create_new_chat_history_table(chat_name)
         self.save_chat_data(chat_name, public_key, members, admins)
+
+    def create_new_user(
+        self,
+        username: str,
+        ip_addr: str,
+        password_hash: str,
+    ) -> None:
+        """
+        Saves a new user into the users table.
+
+        :param username: the sanitised username
+        :param ip_addr: the 32 hex digit representation of the user's IP
+        address
+        :param password_hash: the 32 hex digit representation of the hash
+        of the user's password
+        """
+
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute(f"""
+                  INSERT INTO users (username, ip_addr, password_hash)
+                  VALUES ('{username}', '{ip_addr}', '{password_hash}')
+                  """)
+        conn.commit()
+
 
     def save_chat_data(
         self,
@@ -32,7 +68,17 @@ class Server:
         public_key: int,
         members: list[str],
         admins: list[str],
-    ):
+    ) -> None:
+        """
+        Saves the data of a new chat to a JSON file.
+
+        :param chat_name: the sanitised chat name
+        :param public_key: the public key of the chat
+        :param members: the list of usernames of users in the chat
+        :param admins: the list of usernames of users in the chat with admin
+        privileges
+        """
+
         data = {
             "public-key": public_key,
             "members": members,
@@ -42,7 +88,12 @@ class Server:
         with open(f"chats/{chat_name}.json", "w+") as f:
             f.write(json.dumps(data, indent=4))
 
-    def create_new_server_db(self):
+    def create_new_server_db(self) -> None:
+        """
+        Creates the server database and the users table. Should only be called
+        once (each call deletes the existing database if found).
+        """
+
         if os.path.exists("server-db.db"):
             os.remove("server-db.db")
         
@@ -57,7 +108,14 @@ class Server:
                   )
                   """)
 
-    def create_new_chat_history_table(self, chat_name: str):
+
+    def create_new_chat_history_table(self, chat_name: str) -> None:
+        """
+        Creates a new chat history for a new chat.
+
+        :param chat_name: the sanitised chat name
+        """
+
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
@@ -69,7 +127,13 @@ class Server:
                   )
                   """)
 
-    def save_message(self, message: Message):
+    def save_message(self, message: Message) -> None:
+        """
+        Saves a message to the relevant chat history table.
+
+        :param message: the sanitised message
+        """
+
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
@@ -79,7 +143,7 @@ class Server:
                   """)
         conn.commit()
 
-    def debug_display_chat_history(self, chat_name: str):
+    def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
