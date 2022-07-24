@@ -46,9 +46,9 @@ class Server:
         Saves a new user into the users table.
 
         :param username: the sanitised username
-        :param ip_addr: the 32 hex digit representation of the user's IP
+        :param ip_addr: the 8 digit hex representation of the user's IP
         address
-        :param password_hash: the 32 hex digit representation of the hash
+        :param password_hash: the 64 digit hex representation of the hash
         of the user's password
         """
 
@@ -103,8 +103,8 @@ class Server:
         c.execute(f"""
                   CREATE TABLE users(
                   username VARCHAR({USERNAME_MAX_LEN}) PRIMARY KEY,
-                  ip_addr VARCHAR(32),
-                  password_hash VARCHAR(32)
+                  ip_addr VARCHAR(8),
+                  password_hash VARCHAR(64)
                   )
                   """)
 
