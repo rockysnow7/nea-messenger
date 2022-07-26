@@ -3,6 +3,7 @@ import shutil
 import json
 import sqlite3
 
+from enum import Enum
 from message import Message
 
 
@@ -10,7 +11,12 @@ USERNAME_MAX_LEN = 20
 MESSAGE_CONTENT_MAX_LEN = 500
 
 
-class Server:
+class ChatType(Enum):
+    INDIVIDUAL = 0
+    GROUP = 1
+
+
+class Database:
     def __init__(self) -> None:
         self.create_new_server_db()
 
@@ -22,6 +28,7 @@ class Server:
     def create_new_chat(
         self,
         chat_name: str,
+        chat_type: ChatType,
         public_key: int,
         members: list[str],
         admins: list[str],
@@ -37,7 +44,7 @@ class Server:
         """
 
         self.create_new_chat_history_table(chat_name)
-        self.save_new_chat_data(chat_name, public_key, members, admins)
+        self.save_new_chat_data(chat_name, chat_type, public_key, members, admins)
 
     def create_new_user(
         self,
@@ -68,6 +75,7 @@ class Server:
     def save_new_chat_data(
         self,
         chat_name: str,
+        chat_type: ChatType,
         public_key: int,
         members: list[str],
         admins: list[str],
@@ -76,6 +84,7 @@ class Server:
         Saves the data of a new chat to a JSON file.
 
         :param chat_name: the sanitised chat name
+        :param chat_type: the chat type (ChatType.INDIVIDUAL or ChatType.GROUP)
         :param public_key: the public key of the chat
         :param members: the list of usernames of users in the chat
         :param admins: the list of usernames of users in the chat with admin
@@ -83,6 +92,7 @@ class Server:
         """
 
         data = {
+            "chat-type": chat_type.value,
             "public-key": public_key,
             "members": members,
             "admins": admins,
