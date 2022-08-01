@@ -65,10 +65,13 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        c.execute(f"""
-                  INSERT INTO users (username, ip_addr, password_hash)
-                  VALUES ('{username}', '{ip_addr}', '{password_hash}')
-                  """)
+        c.execute(
+            """
+            INSERT INTO users (username, ip_addr, password_hash)
+            VALUES (?, ?, ?)
+            """,
+            (username, ip_addr, password_hash,),
+        )
         conn.commit()
 
 
@@ -151,10 +154,13 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        c.execute(f"""
-                  INSERT INTO {message.chat_name} (message_type, content, sender_username)
-                  VALUES ({message.message_type.value}, '{message.content}', '{message.sender_username}')
-                  """)
+        c.execute(
+            f"""
+            INSERT INTO {message.chat_name} (message_type, content, sender_username)
+            VALUES (?, ?, ?)
+            """,
+            (message.message_type.value, message.content,message.sender_username,),
+        )
         conn.commit()
 
     def debug_display_chat_history(self, chat_name: str) -> None:
