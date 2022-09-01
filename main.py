@@ -2,7 +2,7 @@ from message import Message, MessagePurpose, TextData
 from rsa import gen_rsa_keys, rsa_encrypt, rsa_decrypt
 from sympy import prime
 from node import Node, Server
-from prototype.database import Database, ChatType
+from database.database import Database, ChatType
 
 
 #server = Server()
