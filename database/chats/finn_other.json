@@ -1,0 +1,16 @@
+{
+    "chat-type": 0,
+    "public-key": 1234,
+    "members": [
+        "finn",
+        "other"
+    ],
+    "admins": [
+        "finn",
+        "other"
+    ],
+    "nicknames": {
+        "finn": "finn",
+        "other": "other"
+    }
+}

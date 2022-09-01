@@ -21,7 +21,7 @@ class TextData(Data):
     def __repr__(self) -> str:
         value = "".join(chr(i) for i in self.value)
 
-        return f"TextData({value})"
+        return f"TextData(\"{value}\")"
 
 class CommandData(Data):
     def __init__(self, value: str):
