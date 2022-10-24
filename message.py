@@ -11,6 +11,9 @@ class Data:
     def __iter__(self):
         yield from self.value
 
+    def __int__(self) -> int:
+        return 0
+
 class TextData(Data):
     def __init__(self, value: str | list[int]):
         if isinstance(value, str):
@@ -23,6 +26,9 @@ class TextData(Data):
 
         return f"TextData(\"{value}\")"
 
+    def __int__(self) -> int:
+        return 1
+
 class CommandData(Data):
     def __init__(self, value: str):
         if isinstance(value, str):
@@ -33,8 +39,11 @@ class CommandData(Data):
 
         return f"TextData({value})"
 
+    def __int__(self) -> int:
+        return 2
 
-class MessagePurpose(Enum): # user_bit * 1, count_bit * 3
+
+class MessagePurpose(Enum): # user_bit * 1, count_bit * 4
     KEY      = 0b00000
     EXCHANGE = 0b00001
     COMMAND  = 0b00010
@@ -45,7 +54,7 @@ class Message:
         self,
         mes_purpose: MessagePurpose,
         sender: str,
-        recipient: str,
+        chat_name: str,
         content: Data,
         *,
         metadata: Data = Data(),
@@ -53,10 +62,10 @@ class Message:
     ):
         self.is_encrypted = is_encrypted
         self.sender = sender
-        self.recipient = recipient
+        self.chat_name = chat_name
         self.mes_purpose = mes_purpose
         self.content = content
         self.metadata = metadata
 
     def __repr__(self) -> str:
-        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.recipient}, {self.content}, {self.metadata})"
+        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.chat_name}, {self.content}, {self.metadata})"

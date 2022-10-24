@@ -1,18 +1,36 @@
+import database
+import encoding
+import ip
+
+from chat_type import ChatType
 from message import Message, MessagePurpose, TextData
 from rsa import gen_rsa_keys, rsa_encrypt, rsa_decrypt
 from sympy import prime
-from node import Node, Server
-from database.database import Database, ChatType
 
 
-#server = Server()
+db = database.Database()
+db.create_new_user(
+    "finn",
+    ip.get_host_ip_addr(),
+    encoding.hash_str("password"),
+)
+db.create_new_user(
+    "other",
+    ip.get_host_ip_addr(),
+    encoding.hash_str("1234"),
+)
 
-mes = Message(MessagePurpose.MESSAGE, "from", "to", TextData("hello"))
-print(mes)
+db.create_new_chat(
+    "finn_other",
+    ChatType.INDIVIDUAL,
+    1234,
+    ["finn", "other"],
+    ["finn", "other"],
+)
 
-pub_key, priv_key = gen_rsa_keys(prime(20), prime(21))
-
-encrypted = rsa_encrypt(mes, pub_key)
-print(encrypted)
-decrypted = rsa_decrypt(encrypted, priv_key)
-print(decrypted)
+db.save_message(Message(
+    MessagePurpose.MESSAGE,
+    "finn",
+    "finn_other",
+    "hey hey",
+))
