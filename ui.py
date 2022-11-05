@@ -3,7 +3,7 @@ import ip
 
 from node import Client, Server
 from message import Message, MessagePurpose, TextData, CommandData
-from database import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
+from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 
 
 class UI:

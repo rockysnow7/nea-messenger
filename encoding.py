@@ -39,3 +39,9 @@ def hash_str(s: str) -> str:
     """
 
     return sha256(s.encode("utf-8")).hexdigest()
+
+def zfill_bytes(s: bytes, n: int) -> bytes:
+    return bytes(n - len(s)) + s
+
+def zremove_bytes(s: bytes) -> bytes:
+    return s.split(b"\0")[-1]

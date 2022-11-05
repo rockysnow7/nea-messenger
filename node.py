@@ -5,6 +5,7 @@ import ip
 import database
 
 from message import Message, MessagePurpose, TextData
+from constants import USERNAME_MAX_LEN
 from rsa import rsa_encrypt, rsa_decrypt
 
 
@@ -18,7 +19,7 @@ class Node:
     def __init__(self) -> None:
         self.ip_addr = ip.get_host_ip_addr()
         print(f"{self.ip_addr=}")
-        self.__is_running = False
+        self._is_running = False
 
         self.__recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -30,30 +31,19 @@ class Node:
         send_socket.sendall(data)
         send_socket.close()
 
-    def __listen_loop(self) -> None:
+    def _listen_loop(self) -> None:
         self.__recv_socket.listen()
         break_flag = False
-        while self.__is_running:
+        while self._is_running:
             conn, addr = self.__recv_socket.accept()
             with conn:
                 print(f"Connected to {addr}.")
                 while True:
                     data = conn.recv(1024)
                     if not data:
-                        self.__is_running = False
+                        self._is_running = False
                         break
                     print(f"{data=}")
-
-    def __send_loop(self) -> None:
-        while self.__is_running:
-            data = input("data: ").encode("utf-8")
-            self._send_bytes_to_ip(self.ip_addr, data)
-            time.sleep(0.1)
-
-    def main_loop(self) -> None:
-        self.__is_running = True
-        threading.Thread(target=self.__listen_loop).start()
-        threading.Thread(target=self.__send_loop).start()
 
 class Client(Node):
     def __init__(self, server: Node) -> None:
@@ -69,7 +59,7 @@ class Client(Node):
 
         if encrypt:
             mes = rsa_encrypt(mes)
-        self.__server.receive_message(mes)
+        #self.__server.receive_message(mes)
 
     def receive_message(self, mes: Message) -> None:
         mes_decrypted = rsa_decrypt(mes)
@@ -85,6 +75,17 @@ class Client(Node):
         """
 
         ...
+
+    def __send_loop(self) -> None:
+        while self._is_running:
+            data = input("data: ").encode("utf-8")
+            self._send_bytes_to_ip(self.ip_addr, data)
+            time.sleep(0.1)
+
+    def run(self) -> None:
+        self._is_running = True
+        threading.Thread(target=self._listen_loop).start()
+        threading.Thread(target=self.__send_loop).start()
 
 class Server(Node):
     def __init__(self) -> None:
@@ -104,7 +105,7 @@ class Server(Node):
 
         elif mes.mes_purpose == MessagePurpose.CREATE_USER:
             ip_addr = mes.sender
-            username = mes.content.value[:database.USERNAME_MAX_LEN].split("\0")[0]
+            username = mes.content.value[:USERNAME_MAX_LEN].split("\0")[0]
             password_hash = mes.content.value[database.USERNAME_MAX_LEN:database.USERNAME_MAX_LEN + 64]
             print(f"{ip_addr=}")
             print(f"{username=}")
@@ -113,3 +114,8 @@ class Server(Node):
             if username not in self._db.get_all_usernames():
                 print(f"{self.__db.get_all_usernames()=}")
                 self.__db.create_new_user(username, ip_addr, password_hash)
+
+    def run(self) -> None:
+        self._is_running = True
+        threading.Thread(target=self._listen_loop).start()
+        #threading.Thread(target=self.__send_loop).start()

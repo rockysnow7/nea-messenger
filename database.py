@@ -6,10 +6,7 @@ import sqlite3
 
 from chat_type import ChatType
 from message import Message
-
-
-USERNAME_MAX_LEN = 20
-MESSAGE_CONTENT_MAX_LEN = 500
+from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 
 
 class Database:
