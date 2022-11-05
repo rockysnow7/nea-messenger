@@ -42,6 +42,15 @@ class Database:
         self.create_new_chat_history_table(chat_name)
         self.save_new_chat_data(chat_name, chat_type, public_key, members, admins)
 
+    def get_all_usernames(self) -> list[str]:
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute("SELECT username FROM users")
+        usernames = c.fetchall()
+
+        return [username[0] for username in usernames]
+
     def create_new_user(
         self,
         username: str,
@@ -134,9 +143,9 @@ class Database:
 
         c.execute(f"""
                   CREATE TABLE {chat_name}(
-                  message_type INT,
+                  mes_purpose INT,
+                  sender_username VARCHAR({USERNAME_MAX_LEN}),
                   content VARCHAR({MESSAGE_CONTENT_MAX_LEN}),
-                  sender_username VARCHAR({USERNAME_MAX_LEN})
                   )
                   """)
 
@@ -152,10 +161,10 @@ class Database:
 
         c.execute(
             f"""
-            INSERT INTO {message.chat_name} (message_type, content, sender_username)
+            INSERT INTO {message.chat_name} (mes_purpose, sender_username, content)
             VALUES (?, ?, ?)
             """,
-            (int(message.content), message.content, message.sender_username),
+            (int(message.mes_purpose), message.sender, message.content),
         )
         conn.commit()
 
