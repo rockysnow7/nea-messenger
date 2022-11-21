@@ -7,8 +7,8 @@ from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 
 
 class UI:
-    def __init__(self, server: Server) -> None:
-        self.client = Client(server)
+    def __init__(self) -> None:
+        self.client = Client()
 
     def _send_message(self) -> None:
         sender = input("sender: ")
@@ -29,6 +29,8 @@ class UI:
         password = input("password: ")
         password_hash = encoding.hash_str(password)
 
+        print(f"{username=}")
+        print(f"{password_hash=}")
         mes = Message(
             MessagePurpose.CREATE_USER,
             encoding.encode_ip_addr(ip.get_host_ip_addr()),
@@ -36,7 +38,7 @@ class UI:
         )
         self.client.send_message(mes)
 
-    def main_loop(self) -> None:
+    def run(self) -> None:
         """
         Main program loop.
         """

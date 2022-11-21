@@ -1,6 +1,8 @@
+import json
 import constants
 
 from enum import Enum
+from copy import deepcopy
 from encoding import zfill_bytes, zremove_bytes
 
 
@@ -17,11 +19,18 @@ class Data:
     def __int__(self) -> int:
         return 0
 
-    def __bytes__(self) -> bytes:
-        value = self.value.encode("utf-8") if isinstance(self.value, str) else self.value
-        value = zfill_bytes(value, constants.MESSAGE_CONTENT_MAX_LEN)
+    def as_JSON_str(self) -> str:
+        value = self.value
+        if isinstance(self.value, bytes):
+            value = "".join(chr(c) for c in self.value)
 
-        return bytes([int(self)]) + value
+        self_dict = {
+            "type": int(self),
+            "value": value,
+        }
+        self_dict_json = json.dumps(self_dict)
+
+        return self_dict_json
 
 class TextData(Data):
     def __init__(self, value: str):
@@ -43,14 +52,16 @@ class CommandData(Data):
     def __int__(self) -> int:
         return 2
 
-def Data_from_bytes(s: bytes) -> Data:
-    if s[0] == 0:
-        return Data(s)
+def Data_from_JSON_str(s: str) -> Data:
+    data_json = json.loads(s)
 
-    if s[0] == 1:
-        return TextData(s.decode("utf-8"))
+    if data_json["type"] == 0:
+        return Data(data_json["value"])
 
-    return CommandData(s.decode("utf-8"))
+    if data_json["type"] == 1:
+        return TextData(data_json["value"])
+
+    return CommandData(data_json["value"])
 
 
 class MessagePurpose(Enum): # user_bit * 1, count_bit * 4
@@ -80,64 +91,38 @@ class Message:
     def __repr__(self) -> str:
         return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.chat_name}, {self.content}, {self.metadata})"
 
+    def __as_JSON_str(self) -> str:
+        self_dict = deepcopy(self.__dict__)
+        self_dict["mes_purpose"] = self.mes_purpose.value
+        self_dict["content"] = self.content.as_JSON_str()
+        self_dict["metadata"] = self.metadata.as_JSON_str()
+        self_dict_json = json.dumps(self_dict)
+
+        return self_dict_json
+
     def __bytes__(self) -> bytes:
-        """
-        Returns a bytes representation of the message, of the following form:
-            is_encrypted (1)
-            sender       (USERNAME_MAX_LEN)
-            chat_name    (CHAT_NAME_MAX_LEN)
-            mes_purpose  (1)
-            content      (MESSAGE_CONTENT_MAX_LEN)
-            metadata     (MESSAGE_CONTENT_MAX_LEN)
-        """
+        return self.__as_JSON_str().encode("utf-8")
 
-        b = b""
+    @staticmethod
+    def dict_from_bytes(b: bytes) -> dict:
+        self_dict = json.loads(b)
+        self_dict["mes_purpose"] = MessagePurpose(self_dict["mes_purpose"])
+        self_dict["content"] = Data_from_JSON_str(self_dict["content"])
+        self_dict["metadata"] = Data_from_JSON_str(self_dict["metadata"])
 
-        is_encrypted = bytes([self.is_encrypted])
-        #input(f"{is_encrypted=}")
-        b += is_encrypted
+        return self_dict
 
-        sender = zfill_bytes(self.sender.encode("utf-8"), constants.USERNAME_MAX_LEN)
-        #input(f"{sender=}")
-        b += sender
-
-        chat_name = zfill_bytes(self.chat_name.encode("utf-8"), constants.CHAT_NAME_MAX_LEN)
-        #input(f"{chat_name=}")
-        b += chat_name
-
-        mes_purpose = bytes([self.mes_purpose.value])
-        #input(f"{mes_purpose=}")
-        b += mes_purpose
-
-        content = bytes(self.content)
-        #input(f"{content=}")
-        b += content
-
-        metadata = bytes(self.metadata)
-        #input(f"{metadata=}")
-        b += metadata
-
-        return b
+    @staticmethod
+    def from_dict(d: dict) -> "Message":
+        return Message(
+            d["mes_purpose"],
+            d["sender"],
+            d["content"],
+            chat_name=d["chat_name"],
+            metadata=d["metadata"],
+            is_encrypted=d["is_encrypted"],
+        )
 
     @staticmethod
     def from_bytes(b: bytes) -> "Message":
-        is_encrypted = b[0] == b"\1"
-        b = b[1:]
-        sender = zremove_bytes(b[:constants.USERNAME_MAX_LEN]).decode("utf-8")
-        b = b[constants.USERNAME_MAX_LEN:]
-        chat_name = zremove_bytes(b[:constants.CHAT_NAME_MAX_LEN]).decode("utf-8")
-        b = b[constants.CHAT_NAME_MAX_LEN:]
-        mes_purpose = MessagePurpose(int(b[0]))
-        b = b[1:]
-        content = Data_from_bytes(b[:1 + constants.MESSAGE_CONTENT_MAX_LEN])
-        b = b[1 + constants.MESSAGE_CONTENT_MAX_LEN:]
-        metadata = Data_from_bytes(b[:1 + constants.MESSAGE_CONTENT_MAX_LEN])
-
-        return Message(
-            mes_purpose,
-            sender,
-            content,
-            chat_name=chat_name,
-            metadata=metadata,
-            is_encrypted=is_encrypted,
-        )
+        return Message.from_dict(Message.dict_from_bytes(b))
