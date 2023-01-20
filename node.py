@@ -1,15 +1,21 @@
 import socket
 import threading
 import time
+import json
 import ip
+import encoding
 import database
 
-from message import Message, MessagePurpose, TextData
+from typing import Callable
+from datetime import datetime
+from message import Message, MessagePurpose, Data, TextData, CommandData
+from chat_type import ChatType
 from constants import USERNAME_MAX_LEN
 from rsa import rsa_encrypt, rsa_decrypt
+from ui_data import UIData, UIDataTopic
 
 
-SERVER_IP_ADDR = "192.168.0.35" # this machine
+SERVER_IP_ADDR = "192.168.0.35" # home machine
 
 CLIENT_SEND_PORT = 8000
 SERVER_SEND_PORT = 8001
@@ -20,12 +26,16 @@ SERVER_RECV_PORT = 8003
 class Node:
     def __init__(self, is_client: bool) -> None:
         self.ip_addr = ip.get_host_ip_addr()
-        self._is_running = False
+        self.is_running = False
         self._recvd_messages = []
 
         self.__recv_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.__recv_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.__recv_socket.bind((self.ip_addr, CLIENT_RECV_PORT if is_client else SERVER_RECV_PORT))
+
+    @property
+    def recvd_messages(self) -> list[Message]:
+        return self._recvd_messages
 
     def _send_bytes_to_ip(self, ip_addr: str, data: bytes, recipient_is_client: bool) -> None:
         send_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -33,25 +43,22 @@ class Node:
         send_socket.sendall(data)
         send_socket.close()
 
-    def _listen_loop(self) -> None:
+    def _listen_loop(self, handler_method: Callable[[Message], None]) -> None:
         self.__recv_socket.listen()
-        while self._is_running:
+        while self.is_running:
             conn, addr = self.__recv_socket.accept()
             with conn:
-                print(f"Connected to {addr}.")
-                while True:
-                    data = conn.recv(1044)
-                    if not data:
-                        self._is_running = False
-                        break
-
+                data = conn.recv(1044)
+                if data:
                     mes = Message.from_bytes(data)
-                    self._recvd_messages.append(mes)
+                    handler_method(mes)
 
 class Client(Node):
     def __init__(self) -> None:
         super().__init__(True)
+        self.__time_last_checked_new_messages = 0
         self.__rsa_priv_keys = {}
+        self.ui_data = []
 
     def send_message(self, mes: Message, encrypt: bool = False) -> None:
         """
@@ -62,10 +69,6 @@ class Client(Node):
             mes = rsa_encrypt(mes)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
-    def __handle_message(self, mes: Message) -> None:
-        if mes.mes_purpose == MessagePurpose.EXCHANGE:
-            self.__handle_key_exchange(mes)
-
     def __handle_key_exchange(self, mes: Message) -> None:
         """
         Handles the Diffie-Hellman key exchange.
@@ -73,29 +76,56 @@ class Client(Node):
 
         ...
 
-    def __handle_message_loop(self) -> None:
-        while True:
-            if self._recvd_messages:
-                self.__handle_message(self._recvd_messages[0])
-                del self._recvd_messages[0]
+    def __handle_message(self, mes: Message) -> None:
+        if mes.mes_purpose == MessagePurpose.EXCHANGE:
+            self.__handle_key_exchange(mes)
 
-    def __send_loop(self) -> None:
-        while self._is_running:
-            data = input("data: ").encode("utf-8")
-            self._send_bytes_to_ip(self.ip_addr, data, False)
-            time.sleep(0.1)
+        elif mes.mes_purpose == MessagePurpose.CREATE_USER_DONE:
+            self.ui_data.append(UIData(UIDataTopic.CREATE_USER, True))
+
+        elif mes.mes_purpose == MessagePurpose.CREATE_USER_USERNAME_TAKEN:
+            self.ui_data.append(UIData(UIDataTopic.CREATE_USER, False))
+
+        elif mes.mes_purpose == MessagePurpose.TEST_LOGIN_SUCCESS:
+            self.ui_data.append(UIData(UIDataTopic.LOG_IN, True))
+
+        elif mes.mes_purpose == MessagePurpose.TEST_LOGIN_FAILURE:
+            self.ui_data.append(UIData(UIDataTopic.LOG_IN, False))
+
+        elif mes.mes_purpose == MessagePurpose.GET_USER_CHAT_NAMES:
+            user_chat_names = json.loads(mes.content.value)
+            self.ui_data.append(UIData(UIDataTopic.GET_USER_CHAT_NAMES, True, user_chat_names))
+
+        elif mes.mes_purpose == MessagePurpose.GET_SETTINGS:
+            self.ui_data.append(UIData(UIDataTopic.SETTINGS, True, mes.content.value))
+
+        else:
+            raise ValueError("Invalid MessagePurpose \"{mes.mes_purpose=}\".")
 
     def run(self) -> None:
-        self._is_running = True
-        threading.Thread(target=self._listen_loop).start()
-        threading.Thread(target=self.__handle_message_loop).start()
-        threading.Thread(target=self.__send_loop).start()
+        self.is_running = True
+        threading.Thread(
+            target=self._listen_loop,
+            args=(self.__handle_message,),
+        ).start()
 
 class Server(Node):
     def __init__(self) -> None:
         super().__init__(False)
 
         self.__db = database.Database()
+        #self.__db.create_new_user(
+        #    "a",
+        #    encoding.encode_ip_addr(SERVER_IP_ADDR),
+        #    "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
+        #)
+        #self.__db.create_new_chat(
+        #    "test",
+        #    ChatType.INDIVIDUAL,
+        #    0,
+        #    ["a"],
+        #    ["a"],
+        #)
 
     def __send_message(self, mes: Message, recipient_ip: str) -> None:
         self._send_bytes_to_ip(recipient_ip, bytes(mes), True)
@@ -108,20 +138,70 @@ class Server(Node):
             ip_addr = mes.sender
             username = mes.content.value[:USERNAME_MAX_LEN].split("\0")[0]
             password_hash = mes.content.value[database.USERNAME_MAX_LEN:database.USERNAME_MAX_LEN + 64]
-            print(f"{username=}")
-            print(f"{password_hash=}")
 
             if username not in self.__db.get_all_usernames():
                 self.__db.create_new_user(username, ip_addr, password_hash)
+                self.__send_message(Message(
+                    MessagePurpose.CREATE_USER_DONE,
+                    self.ip_addr,
+                    Data(),
+                ), encoding.decode_ip_addr(ip_addr))
+            else:
+                self.__send_message(Message(
+                    MessagePurpose.CREATE_USER_USERNAME_TAKEN,
+                    self.ip_addr,
+                    Data(),
+                ), encoding.decode_ip_addr(ip_addr))
 
-    def __handle_message_loop(self) -> None:
-        while True:
-            if self._recvd_messages:
-                print(f"{self._recvd_messages[0]=}")
-                self.__handle_message(self._recvd_messages[0])
-                del self._recvd_messages[0]
+        elif mes.mes_purpose == MessagePurpose.TEST_LOGIN:
+            ip_addr = mes.sender
+            username = mes.content.value[:USERNAME_MAX_LEN].split("\0")[0]
+            password_hash = mes.content.value[database.USERNAME_MAX_LEN:database.USERNAME_MAX_LEN + 64]
+
+            success = self.__db.test_username_password_hash_match(username, password_hash)
+            self.__send_message(Message(
+                MessagePurpose.TEST_LOGIN_SUCCESS if success else MessagePurpose.TEST_LOGIN_FAILURE,
+                self.ip_addr,
+                Data(),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        elif mes.mes_purpose == MessagePurpose.GET_USER_CHAT_NAMES:
+            ip_addr = mes.sender
+            username = mes.content.value.split("\0")[0]
+
+            user_chat_names = self.__db.get_user_chat_names(username)
+            user_chat_names = json.dumps(user_chat_names)
+
+            self.__send_message(Message(
+                MessagePurpose.GET_USER_CHAT_NAMES,
+                self.ip_addr,
+                CommandData(user_chat_names),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        elif mes.mes_purpose == MessagePurpose.SET_COLOR:
+            ip_addr = mes.sender
+            color = mes.content.value.split("\0")[0]
+            username = self.__db.get_username_from_ip_addr(ip_addr)
+
+            self.__db.save_user_settings(username, color=color)
+
+        elif mes.mes_purpose == MessagePurpose.GET_SETTINGS:
+            ip_addr = mes.sender
+            key = mes.content.value.split("\0")[0]
+            username = self.__db.get_username_from_ip_addr(ip_addr)
+
+            user_settings = self.__db.get_user_settings(username)
+            setting = user_settings[key]
+
+            self.__send_message(Message(
+                MessagePurpose.GET_SETTINGS,
+                self.ip_addr,
+                CommandData(setting),
+            ), encoding.decode_ip_addr(ip_addr))
 
     def run(self) -> None:
-        self._is_running = True
-        threading.Thread(target=self._listen_loop).start()
-        threading.Thread(target=self.__handle_message_loop).start()
+        self.is_running = True
+        threading.Thread(
+            target=self._listen_loop,
+            args=(self.__handle_message,),
+        ).start()

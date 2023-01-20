@@ -17,6 +17,9 @@ class Database:
             shutil.rmtree("chats")
         os.mkdir("chats")
 
+        if os.path.exists("settings"):
+            shutil.rmtree("settings")
+        os.mkdir("settings")
 
     def create_new_chat(
         self,
@@ -48,6 +51,47 @@ class Database:
 
         return [username[0] for username in usernames]
 
+    def get_username_from_ip_addr(self, ip_addr: str) -> str:
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute(
+            """
+            SELECT username FROM users
+            WHERE ip_addr = ?
+            """,
+            (ip_addr,))
+        username = c.fetchall()[0][0]
+
+        return username
+
+    def test_username_password_hash_match(self, username: str, password_hash: str) -> bool:
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute(
+            """
+            SELECT * FROM users
+            WHERE username = ? AND password_hash = ?
+            """,
+            (username, password_hash),
+        )
+        results = c.fetchall()
+
+        return len(results) > 0
+
+    def get_user_chat_names(self, username: str) -> list[str]:
+        user_chat_names = []
+        for chat in os.listdir("chats"):
+            with open(f"chats/{chat}", "r") as f:
+                f_dict = json.load(f)
+
+            if username in f_dict["members"]:
+                chat_name = chat.split(".")[0]
+                user_chat_names.append(chat_name)
+
+        return user_chat_names
+
     def create_new_user(
         self,
         username: str,
@@ -76,6 +120,11 @@ class Database:
         )
         conn.commit()
 
+        data = {
+            "color": "white",
+        }
+        with open(f"settings/{username}.json", "w+") as f:
+            f.write(json.dumps(data, indent=4))
 
     def save_new_chat_data(
         self,
@@ -127,7 +176,6 @@ class Database:
                   )
                   """)
 
-
     def create_new_chat_history_table(self, chat_name: str) -> None:
         """
         Creates a new chat history for a new chat.
@@ -138,13 +186,15 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        c.execute(f"""
-                  CREATE TABLE {chat_name}(
-                  mes_purpose INT,
-                  sender_username VARCHAR({USERNAME_MAX_LEN}),
-                  content VARCHAR({MESSAGE_CONTENT_MAX_LEN}),
-                  )
-                  """)
+        c.execute(
+            f"""
+            CREATE TABLE {chat_name}(
+            mes_purpose INT,
+            sender_username VARCHAR({USERNAME_MAX_LEN}),
+            content VARCHAR({MESSAGE_CONTENT_MAX_LEN})
+            )
+            """,
+        )
 
     def save_message(self, message: Message) -> None:
         """
@@ -164,6 +214,25 @@ class Database:
             (int(message.mes_purpose), message.sender, message.content),
         )
         conn.commit()
+
+    def get_user_settings(self, username: str) -> dict[str, any]:
+        with open(f"settings/{username}.json", "r") as f:
+            settings = json.load(f)
+
+        return settings
+
+    def save_user_settings(
+        self,
+        username: str,
+        *,
+        color: str = None,
+    ) -> None:
+        settings = self.get_user_settings(username)
+        if color is not None:
+            settings["color"] = color
+
+        with open(f"settings/{username}.json", "w+") as f:
+            f.write(json.dumps(settings, indent=4))
 
     def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")
