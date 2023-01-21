@@ -78,7 +78,7 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
-        username_padded += "\0" * (USERNAME_MAX_LEN - len(username))
+        username_padded = username + "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
 
@@ -108,7 +108,7 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
-        username_padded += "\0" * (USERNAME_MAX_LEN - len(username))
+        username_padded = username + "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
 
