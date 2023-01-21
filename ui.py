@@ -49,7 +49,6 @@ class UI:
             MessagePurpose.GET_SETTINGS,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(key),
-            sender_username=self.username,
         ))
 
         while not any(data.topic == UIDataTopic.SETTINGS for data in self.client.ui_data):
@@ -79,14 +78,14 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
-        username += "\0" * (USERNAME_MAX_LEN - len(username))
+        username_padded += "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
 
         self.client.send_message(Message(
             MessagePurpose.CREATE_USER,
             encoding.encode_ip_addr(self.client.ip_addr),
-            CommandData(username + password_hash),
+            CommandData(username_padded + password_hash),
         ))
 
         while not any(data.topic == UIDataTopic.CREATE_USER for data in self.client.ui_data):
@@ -109,14 +108,14 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
-        username += "\0" * (USERNAME_MAX_LEN - len(username))
+        username_padded += "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
 
         mes = Message(
             MessagePurpose.TEST_LOGIN,
             encoding.encode_ip_addr(self.client.ip_addr),
-            CommandData(username + password_hash),
+            CommandData(username_padded + password_hash),
         )
         self.client.send_message(mes)
 
@@ -138,7 +137,6 @@ class UI:
             MessagePurpose.GET_USER_CHAT_NAMES,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username),
-            sender_username=self.username,
         ))
 
         while not any(data.topic == UIDataTopic.GET_USER_CHAT_NAMES for data in self.client.ui_data):
@@ -146,6 +144,22 @@ class UI:
 
         for i in range(len(self.client.ui_data)):
             if self.client.ui_data[i].topic == UIDataTopic.GET_USER_CHAT_NAMES:
+                data = self.client.ui_data[i]
+                del self.client.ui_data[i]
+                return data.value
+
+    def __get_all_usernames(self) -> list[str]:
+        self.client.send_message(Message(
+            MessagePurpose.GET_ALL_USERNAMES,
+            encoding.encode_ip_addr(self.client.ip_addr),
+            CommandData(),
+        ))
+
+        while not any(data.topic == UIDataTopic.GET_ALL_USERNAMES for data in self.client.ui_data):
+            pass
+
+        for i in range(len(self.client.ui_data)):
+            if self.client.ui_data[i].topic == UIDataTopic.GET_ALL_USERNAMES:
                 data = self.client.ui_data[i]
                 del self.client.ui_data[i]
                 return data.value
@@ -179,7 +193,6 @@ class UI:
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
                             CommandData("white"),
-                            sender_username=self.username,
                         ))
                         self.settings["color"] = "white"
                         break
@@ -189,7 +202,6 @@ class UI:
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
                             CommandData("blue"),
-                            sender_username=self.username,
                         ))
                         self.settings["color"] = "blue"
                         break
@@ -214,41 +226,41 @@ class UI:
             type_option = int(self.__input("> "))
             if type_option == 1:
                 other_username = self.__input("\nOther person's username: ")
-                chat_name = self.__create_individual_chat_name(self.username, other_username)
-                chat_names = self.__get_chat_names()
-                if chat_name not in chat_names:
-                    pub_key, priv_key = gen_rsa_keys(
-                        secrets.choice(list(sympy.primerange(100, 200))),
-                        secrets.choice(list(sympy.primerange(100, 200))),
-                    )
-                    data = json.dumps({
-                        "chat_name": chat_name,
-                        "chat_type": ChatType.INDIVIDUAL.value,
-                        "public_key": pub_key,
-                        "members": [self.username, other_username],
-                        "admins": [self.username, other_username],
-                    })
+                all_usernames = self.__get_all_usernames()
+                if other_username in all_usernames: # check if other user exists
+                    chat_name = self.__create_individual_chat_name(self.username, other_username)
+                    chat_names = self.__get_chat_names()
+                    if chat_name not in chat_names: # check if user already has this chat
+                        pub_key, priv_key = gen_rsa_keys(
+                            secrets.choice(list(sympy.primerange(100, 200))),
+                            secrets.choice(list(sympy.primerange(100, 200))),
+                        )
+                        data = json.dumps({
+                            "chat_name": chat_name,
+                            "chat_type": ChatType.INDIVIDUAL.value,
+                            "public_key": pub_key,
+                            "members": [self.username, other_username],
+                            "admins": [self.username, other_username],
+                        })
 
-                    # create chat on server
-                    self.client.send_message(Message(
-                        MessagePurpose.CREATE_CHAT,
-                        encoding.encode_ip_addr(self.client.ip_addr),
-                        CommandData(data),
-                        sender_username=self.username,
-                    ))
+                        # create chat on server
+                        self.client.send_message(Message(
+                            MessagePurpose.CREATE_CHAT,
+                            encoding.encode_ip_addr(self.client.ip_addr),
+                            CommandData(data),
+                        ))
 
-                    # save private key locally
-                    if not os.path.exists("user-chats"):
-                        os.mkdir("user-chats")
+                        # save private key locally
+                        if not os.path.exists("user-chats"):
+                            os.mkdir("user-chats")
 
-                    os.mkdir(f"user-chats/{self.username}")
-                    with open(f"user-chats/{self.username}/{chat_name}.json", "w+") as f:
-                        data = json.dump({
-                            "private_key": priv_key,
-                        }, f)
+                        with open(f"user-chats/{chat_name}.json", "w+") as f:
+                            data = json.dump({
+                                "private_key": priv_key,
+                            }, f)
 
-                else:
-                    print(f"You already have a chat with {other_username}!\n")
+                    else:
+                        print(f"You already have a chat with {other_username}!\n")
 
             elif type_option == 2:
                 chat_name = self.__input("\nChat name: ")
@@ -269,7 +281,6 @@ class UI:
                         MessagePurpose.CREATE_CHAT,
                         encoding.encode_ip_addr(self.client.ip_addr),
                         CommandData(data),
-                        sender_username=self.username,
                     ))
 
                     # TODO

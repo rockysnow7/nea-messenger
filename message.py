@@ -82,6 +82,7 @@ class MessagePurpose(Enum):
     GET_USER_CHAT_NAMES         = 10
     SET_COLOR                   = 11
     GET_SETTINGS                = 12
+    GET_ALL_USERNAMES           = 13
 
 class Message:
     def __init__(

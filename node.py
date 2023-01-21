@@ -100,6 +100,10 @@ class Client(Node):
         elif mes.mes_purpose == MessagePurpose.GET_SETTINGS:
             self.ui_data.append(UIData(UIDataTopic.SETTINGS, True, mes.content.value))
 
+        elif mes.mes_purpose == MessagePurpose.GET_ALL_USERNAMES:
+            usernames = json.loads(mes.content.value)
+            self.ui_data.append(UIData(UIDataTopic.GET_ALL_USERNAMES, True, usernames))
+
         else:
             raise ValueError("Invalid MessagePurpose \"{mes.mes_purpose=}\".")
 
@@ -215,6 +219,16 @@ class Server(Node):
                 MessagePurpose.GET_SETTINGS,
                 self.ip_addr,
                 CommandData(setting),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        # get a list of all usernames
+        elif mes.mes_purpose == MessagePurpose.GET_ALL_USERNAMES:
+            ip_addr = mes.sender
+            usernames = json.dumps(self.__db.get_all_usernames())
+            self.__send_message(Message(
+                MessagePurpose.GET_ALL_USERNAMES,
+                self.ip_addr,
+                CommandData(usernames),
             ), encoding.decode_ip_addr(ip_addr))
 
     def run(self) -> None:
