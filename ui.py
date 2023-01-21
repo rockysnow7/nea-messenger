@@ -220,11 +220,15 @@ class UI:
         self.__print("CREATE CHAT\n")
 
         while True:
-            self.__print("1) single chat")
-            self.__print("2) group chat")
+            self.__print("1) go back")
+            self.__print("2) single chat")
+            self.__print("3) group chat")
 
             type_option = int(self.__input("> "))
             if type_option == 1:
+                break
+
+            if type_option == 2:
                 other_username = self.__input("\nOther person's username: ")
                 all_usernames = self.__get_all_usernames()
                 if other_username in all_usernames: # check if other user exists
@@ -259,12 +263,14 @@ class UI:
                                 "private_key": priv_key,
                             }, f)
 
+                        self.__print("Created chat!")
+
                     else:
                         print(f"You already have a chat with {other_username}!\n")
                 else:
                     print("That user does not exist.")
 
-            elif type_option == 2:
+            elif type_option == 3:
                 chat_name = self.__input("\nChat name: ")
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
