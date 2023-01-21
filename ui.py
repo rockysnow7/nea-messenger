@@ -87,7 +87,6 @@ class UI:
             MessagePurpose.CREATE_USER,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username + password_hash),
-            sender_username=self.username,
         ))
 
         while not any(data.topic == UIDataTopic.CREATE_USER for data in self.client.ui_data):
@@ -118,7 +117,6 @@ class UI:
             MessagePurpose.TEST_LOGIN,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username + password_hash),
-            sender_username=self.username,
         )
         self.client.send_message(mes)
 
