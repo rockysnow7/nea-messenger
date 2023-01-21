@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from node import Client, Server
 from chat_type import ChatType
 from rsa import gen_rsa_keys
-from message import Message, MessagePurpose, TextData, CommandData
+from message import Message, MessagePurpose, TextData, CommandData, Data
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 from ui_data import UIDataTopic
 
@@ -152,7 +152,7 @@ class UI:
         self.client.send_message(Message(
             MessagePurpose.GET_ALL_USERNAMES,
             encoding.encode_ip_addr(self.client.ip_addr),
-            CommandData(),
+            Data(),
         ))
 
         while not any(data.topic == UIDataTopic.GET_ALL_USERNAMES for data in self.client.ui_data):
