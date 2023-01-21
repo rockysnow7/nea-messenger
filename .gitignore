@@ -1,3 +1,6 @@
 __pycache__
+settings
+chats
+user-chats
 prototype/chats
 prototype/*.db

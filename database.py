@@ -25,7 +25,7 @@ class Database:
         self,
         chat_name: str,
         chat_type: ChatType,
-        public_key: int,
+        public_key: tuple[int, int],
         members: list[str],
         admins: list[str],
     ) -> None:
@@ -130,7 +130,7 @@ class Database:
         self,
         chat_name: str,
         chat_type: ChatType,
-        public_key: int,
+        public_key: tuple[int, int],
         members: list[str],
         admins: list[str],
     ) -> None:
@@ -147,7 +147,7 @@ class Database:
 
         data = {
             "chat-type": chat_type.value,
-            "public-key": public_key,
+            "public-key": list(public_key),
             "members": members,
             "admins": admins,
             "nicknames": {m: m for m in members},

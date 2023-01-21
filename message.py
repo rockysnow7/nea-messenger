@@ -75,12 +75,13 @@ class MessagePurpose(Enum):
     CREATE_USER                 = 3
     CREATE_USER_USERNAME_TAKEN  = 4
     CREATE_USER_DONE            = 5
-    TEST_LOGIN                  = 6
-    TEST_LOGIN_SUCCESS          = 7
-    TEST_LOGIN_FAILURE          = 8
-    GET_USER_CHAT_NAMES         = 9
-    SET_COLOR                   = 10
-    GET_SETTINGS                = 11
+    CREATE_CHAT                 = 6
+    TEST_LOGIN                  = 7
+    TEST_LOGIN_SUCCESS          = 8
+    TEST_LOGIN_FAILURE          = 9
+    GET_USER_CHAT_NAMES         = 10
+    SET_COLOR                   = 11
+    GET_SETTINGS                = 12
 
 class Message:
     def __init__(

@@ -1,3 +1,4 @@
+import sys
 import socket
 import threading
 import time
@@ -109,16 +110,21 @@ class Client(Node):
             args=(self.__handle_message,),
         ).start()
 
+    def exit(self) -> None:
+        self.is_running = False
+        print("exiting")
+        sys.exit(0)
+
 class Server(Node):
     def __init__(self) -> None:
         super().__init__(False)
 
         self.__db = database.Database()
-        #self.__db.create_new_user(
-        #    "a",
-        #    encoding.encode_ip_addr(SERVER_IP_ADDR),
-        #    "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
-        #)
+        self.__db.create_new_user(
+            "finn",
+            encoding.encode_ip_addr(SERVER_IP_ADDR),
+            encoding.hash_str("test"),
+        )
         #self.__db.create_new_chat(
         #    "test",
         #    ChatType.INDIVIDUAL,
@@ -131,9 +137,11 @@ class Server(Node):
         self._send_bytes_to_ip(recipient_ip, bytes(mes), True)
 
     def __handle_message(self, mes: Message) -> None:
+        # save message
         if mes.mes_purpose == MessagePurpose.MESSAGE:
             self.__db.save_message(mes)
 
+        # create an account
         elif mes.mes_purpose == MessagePurpose.CREATE_USER:
             ip_addr = mes.sender
             username = mes.content.value[:USERNAME_MAX_LEN].split("\0")[0]
@@ -153,6 +161,13 @@ class Server(Node):
                     Data(),
                 ), encoding.decode_ip_addr(ip_addr))
 
+        # create a chat
+        elif mes.mes_purpose == MessagePurpose.CREATE_CHAT:
+            ip_addr = mes.sender
+            data = json.loads(mes.content.value)
+            self.__db.create_new_chat(*data.values())
+
+        # check if the user successfully logged in
         elif mes.mes_purpose == MessagePurpose.TEST_LOGIN:
             ip_addr = mes.sender
             username = mes.content.value[:USERNAME_MAX_LEN].split("\0")[0]
@@ -165,6 +180,7 @@ class Server(Node):
                 Data(),
             ), encoding.decode_ip_addr(ip_addr))
 
+        # get a list of names of all chats the user can access
         elif mes.mes_purpose == MessagePurpose.GET_USER_CHAT_NAMES:
             ip_addr = mes.sender
             username = mes.content.value.split("\0")[0]
@@ -178,6 +194,7 @@ class Server(Node):
                 CommandData(user_chat_names),
             ), encoding.decode_ip_addr(ip_addr))
 
+        # set the user's color scheme to a given color
         elif mes.mes_purpose == MessagePurpose.SET_COLOR:
             ip_addr = mes.sender
             color = mes.content.value.split("\0")[0]
@@ -185,6 +202,7 @@ class Server(Node):
 
             self.__db.save_user_settings(username, color=color)
 
+        # get the user's general settings
         elif mes.mes_purpose == MessagePurpose.GET_SETTINGS:
             ip_addr = mes.sender
             key = mes.content.value.split("\0")[0]

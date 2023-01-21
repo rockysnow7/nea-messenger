@@ -1,9 +1,15 @@
 import os
+import sys
+import secrets
+import json
+import sympy
 import encoding
 import ip
 
 from dataclasses import dataclass
 from node import Client, Server
+from chat_type import ChatType
+from rsa import gen_rsa_keys
 from message import Message, MessagePurpose, TextData, CommandData
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 from ui_data import UIDataTopic
@@ -104,7 +110,6 @@ class UI:
                 data = self.client.ui_data[i]
                 del self.client.ui_data[i]
                 self.username = username
-                self.is_logged_in = True
                 return data.success
 
     def __log_in(self) -> None:
@@ -136,7 +141,6 @@ class UI:
                 data = self.client.ui_data[i]
                 del self.client.ui_data[i]
                 self.username = username
-                self.is_logged_in = True
                 return data.success
 
         self.settings["color"] = self.__get_user_settings("color")
@@ -200,6 +204,83 @@ class UI:
                         self.settings["color"] = "blue"
                         break
 
+    def __create_individual_chat_name(self, user_1: str, user_2: str) -> str:
+        return "-".join(sorted([user_1, user_2]))
+
+    def __run_create_chat(self) -> None:
+        """
+        Allows the user to create a new chat.
+        """
+
+        self.__update_settings()
+
+        os.system("clear")
+        self.__print("CREATE CHAT\n")
+
+        while True:
+            self.__print("1) single chat")
+            self.__print("2) group chat")
+
+            type_option = int(self.__input("> "))
+            if type_option == 1:
+                other_username = self.__input("\nOther person's username: ")
+                chat_name = self.__create_individual_chat_name(self.username, other_username)
+                chat_names = self.__get_chat_names()
+                if chat_name not in chat_names:
+                    pub_key, priv_key = gen_rsa_keys(
+                        secrets.choice(sympy.primerange(100, 200)),
+                        secrets.choice(sympy.primerange(100, 200)),
+                    )
+                    data = json.dumps({
+                        "chat_name": chat_name,
+                        "chat_type": ChatType.INDIVIDUAL,
+                        "public_key": pub_key,
+                        "members": [self.username, other_username],
+                        "admins": [self.username, other_username],
+                    })
+
+                    self.client.send_message(Message(
+                        MessagePurpose.CREATE_CHAT,
+                        encoding.encode_ip_addr(self.client.ip_addr),
+                        CommandData(data),
+                    ))
+
+                    if not os.path.exists("user-chats"):
+                        os.mkdir("user-chats")
+                    with open(f"user-chats/{chat_name}.json", "w+") as f:
+                        data = json.dump({
+                            "private_key": priv_key,
+                        }, f)
+
+                else:
+                    print(f"You already have a chat with {other_username}!\n")
+
+            elif type_option == 2:
+                chat_name = self.__input("\nChat name: ")
+                chat_names = self.__get_chat_names()
+                if chat_name not in chat_names:
+                    pub_key, priv_key = gen_rsa_keys(
+                        secrets.choice(sympy.primerange(100, 200)),
+                        secrets.choice(sympy.primerange(100, 200)),
+                    )
+                    data = json.dumps({
+                        "chat_name": chat_name,
+                        "chat_type": ChatType.GROUP,
+                        "public_key": pub_key,
+                        "members": [self.username, other_username],
+                        "admins": [self.username, other_username],
+                    })
+                    self.client.send_message(Message(
+                        MessagePurpose.CREATE_CHAT,
+                        encoding.encode_ip_addr(self.client.ip_addr),
+                        CommandData(data),
+                    ))
+
+                    # TODO
+
+                else:
+                    print("You already have a chat with that name!\n")
+
     def __run_chat(self, chat_name: str) -> None:
         """
         Allows the user to interact with a chat.
@@ -234,13 +315,14 @@ class UI:
             option = int(self.__input("> "))
 
             if option == 1:
-                break
+                self.client.exit()
+                sys.exit(0)
 
             if option == 2:
                 self.__run_general_settings()
 
             elif option == 3:
-                ...
+                self.__run_create_chat()
 
             elif option <= len(user_chats) - 3:
                 self.__run_chat(user_chats[option - 3])
@@ -268,6 +350,7 @@ class UI:
 
             elif option == 2:
                 if self.__create_user():
+                    self.is_logged_in = True
                     self.__print("\nCreated user!\n")
                     self.__run_main_menu()
                 else:
@@ -275,6 +358,7 @@ class UI:
 
             elif option == 3:
                 if self.__log_in():
+                    self.is_logged_in = True
                     self.__print("\nLogged in!\n")
                     self.__run_main_menu()
                 else:
