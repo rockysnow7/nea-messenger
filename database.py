@@ -3,6 +3,7 @@ import os
 import shutil
 import json
 import sqlite3
+import encoding
 
 from chat_type import ChatType
 from message import Message
@@ -186,6 +187,7 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
+        chat_name = "_" + encoding.hash_str(chat_name)
         c.execute(
             f"""
             CREATE TABLE {chat_name}(

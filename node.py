@@ -169,6 +169,7 @@ class Server(Node):
         elif mes.mes_purpose == MessagePurpose.CREATE_CHAT:
             ip_addr = mes.sender
             data = json.loads(mes.content.value)
+            data["chat_type"] = ChatType(data["chat_type"])
             self.__db.create_new_chat(*data.values())
 
         # check if the user successfully logged in

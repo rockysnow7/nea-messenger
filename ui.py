@@ -261,6 +261,8 @@ class UI:
 
                     else:
                         print(f"You already have a chat with {other_username}!\n")
+                else:
+                    print("That user does not exist.")
 
             elif type_option == 2:
                 chat_name = self.__input("\nChat name: ")
