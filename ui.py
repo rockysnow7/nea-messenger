@@ -49,6 +49,7 @@ class UI:
             MessagePurpose.GET_SETTINGS,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(key),
+            sender_username=self.username,
         ))
 
         while not any(data.topic == UIDataTopic.SETTINGS for data in self.client.ui_data):
@@ -68,19 +69,6 @@ class UI:
         for key in self.settings:
             self.settings[key] = self.__get_user_settings(key)
 
-    def __send_message(self) -> None:
-        sender = self.__input("sender: ")
-        chat = self.__input("chat: ")
-        content = TextData(self.__input("content: "))
-
-        mes = Message(
-            MessagePurpose.MESSAGE,
-            sender,
-            chat,
-            content,
-        )
-        self.client.send_message(mes)
-
     def __create_user(self) -> bool:
         """
         Handles account creation.
@@ -95,12 +83,12 @@ class UI:
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
 
-        mes = Message(
+        self.client.send_message(Message(
             MessagePurpose.CREATE_USER,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username + password_hash),
-        )
-        self.client.send_message(mes)
+            sender_username=self.username,
+        ))
 
         while not any(data.topic == UIDataTopic.CREATE_USER for data in self.client.ui_data):
             pass
@@ -130,6 +118,7 @@ class UI:
             MessagePurpose.TEST_LOGIN,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username + password_hash),
+            sender_username=self.username,
         )
         self.client.send_message(mes)
 
@@ -151,6 +140,7 @@ class UI:
             MessagePurpose.GET_USER_CHAT_NAMES,
             encoding.encode_ip_addr(self.client.ip_addr),
             CommandData(username),
+            sender_username=self.username,
         ))
 
         while not any(data.topic == UIDataTopic.GET_USER_CHAT_NAMES for data in self.client.ui_data):
@@ -191,6 +181,7 @@ class UI:
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
                             CommandData("white"),
+                            sender_username=self.username,
                         ))
                         self.settings["color"] = "white"
                         break
@@ -200,6 +191,7 @@ class UI:
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
                             CommandData("blue"),
+                            sender_username=self.username,
                         ))
                         self.settings["color"] = "blue"
                         break
@@ -239,15 +231,20 @@ class UI:
                         "admins": [self.username, other_username],
                     })
 
+                    # create chat on server
                     self.client.send_message(Message(
                         MessagePurpose.CREATE_CHAT,
                         encoding.encode_ip_addr(self.client.ip_addr),
                         CommandData(data),
+                        sender_username=self.username,
                     ))
 
+                    # save private key locally
                     if not os.path.exists("user-chats"):
                         os.mkdir("user-chats")
-                    with open(f"user-chats/{chat_name}.json", "w+") as f:
+
+                    os.mkdir(f"user-chats/{self.username}")
+                    with open(f"user-chats/{self.username}/{chat_name}.json", "w+") as f:
                         data = json.dump({
                             "private_key": priv_key,
                         }, f)
@@ -274,6 +271,7 @@ class UI:
                         MessagePurpose.CREATE_CHAT,
                         encoding.encode_ip_addr(self.client.ip_addr),
                         CommandData(data),
+                        sender_username=self.username,
                     ))
 
                     # TODO

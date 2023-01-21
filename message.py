@@ -90,19 +90,21 @@ class Message:
         sender: str,
         content: Data,
         *,
+        sender_username: str = "",
         chat_name: str = "",
         is_encrypted: bool = False,
         timestamp: float = time.time(),
     ):
         self.is_encrypted = is_encrypted
         self.sender = sender
+        self.sender_username = sender_username
         self.chat_name = chat_name
         self.mes_purpose = mes_purpose
         self.content = content
         self.timestamp = timestamp
 
     def __repr__(self) -> str:
-        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.chat_name}, {self.content}, {self.timestamp})"
+        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.sender_username}, {self.chat_name}, {self.content}, {self.timestamp})"
 
     def __as_JSON_str(self) -> str:
         self_dict = deepcopy(self.__dict__)
