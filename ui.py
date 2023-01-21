@@ -223,7 +223,7 @@ class UI:
                     )
                     data = json.dumps({
                         "chat_name": chat_name,
-                        "chat_type": ChatType.INDIVIDUAL,
+                        "chat_type": ChatType.INDIVIDUAL.value,
                         "public_key": pub_key,
                         "members": [self.username, other_username],
                         "admins": [self.username, other_username],
@@ -255,12 +255,12 @@ class UI:
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
                     pub_key, priv_key = gen_rsa_keys(
-                        secrets.choice(sympy.primerange(100, 200)),
-                        secrets.choice(sympy.primerange(100, 200)),
+                        secrets.choice(list(sympy.primerange(100, 200))),
+                        secrets.choice(list(sympy.primerange(100, 200))),
                     )
                     data = json.dumps({
                         "chat_name": chat_name,
-                        "chat_type": ChatType.GROUP,
+                        "chat_type": ChatType.GROUP.value,
                         "public_key": pub_key,
                         "members": [self.username, other_username],
                         "admins": [self.username, other_username],
