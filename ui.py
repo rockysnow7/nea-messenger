@@ -218,8 +218,8 @@ class UI:
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
                     pub_key, priv_key = gen_rsa_keys(
-                        secrets.choice(sympy.primerange(100, 200)),
-                        secrets.choice(sympy.primerange(100, 200)),
+                        secrets.choice(list(sympy.primerange(100, 200))),
+                        secrets.choice(list(sympy.primerange(100, 200))),
                     )
                     data = json.dumps({
                         "chat_name": chat_name,
