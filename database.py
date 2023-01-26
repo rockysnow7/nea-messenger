@@ -62,7 +62,9 @@ class Database:
             WHERE ip_addr = ?
             """,
             (ip_addr,))
-        username = c.fetchall()[0][0]
+        results = c.fetchall()
+        print(f"{results=}")
+        username = results[0][0]
 
         return username
 

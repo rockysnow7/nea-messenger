@@ -330,8 +330,7 @@ class UI:
             option = int(self.__input("> "))
 
             if option == 1:
-                self.client.exit()
-                sys.exit(0)
+                break
 
             if option == 2:
                 self.__run_general_settings()
