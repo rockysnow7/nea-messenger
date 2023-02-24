@@ -1,6 +1,7 @@
-__pycache__
-settings
-chats
-user-chats
-prototype/chats
-prototype/*.db
+__pycache__/
+settings/
+chats/
+user-chats/
+prototype/
+*.db
+notes.md
