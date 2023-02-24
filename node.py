@@ -3,6 +3,8 @@ import socket
 import threading
 import time
 import json
+import sympy
+import secrets
 import ip
 import encoding
 import database
@@ -12,6 +14,7 @@ from datetime import datetime
 from message import Message, MessagePurpose, Data, TextData, CommandData
 from chat_type import ChatType
 from constants import USERNAME_MAX_LEN
+from math_funcs import primitive_root_mod
 from rsa import rsa_encrypt, rsa_decrypt
 from ui_data import UIData, UIDataTopic
 
@@ -22,6 +25,9 @@ CLIENT_SEND_PORT = 8000
 SERVER_SEND_PORT = 8001
 CLIENT_RECV_PORT = 8002
 SERVER_RECV_PORT = 8003
+
+KEY_MIN = 500
+KEY_MAX = 1000
 
 
 class Node:
@@ -58,7 +64,7 @@ class Client(Node):
     def __init__(self) -> None:
         super().__init__(True)
         self.__time_last_checked_new_messages = 0
-        self.__rsa_priv_keys = {}
+        self.__diffie_hellman_keys = {}
         self.ui_data = []
 
     def send_message(self, mes: Message, encrypt: bool = False) -> None:
@@ -70,12 +76,95 @@ class Client(Node):
             mes = rsa_encrypt(mes)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
-    def __handle_key_exchange(self, mes: Message) -> None:
+    def send_message_to_ip(self, mes: Message, ip_addr: str) -> None:
+        self._send_bytes_to_ip(ip_addr, bytes(mes), True)
+
+    def start_key_exchange(self, ip_addr: str) -> None: # alice
         """
-        Handles the Diffie-Hellman key exchange.
+        Initiates the Diffie-Hellman key exchange.
         """
 
-        ...
+        p = secrets.choice(list(sympy.primerange(KEY_MIN, KEY_MAX)))
+        g = primitive_root_mod(p)
+        a = secrets.choice(range(1000))
+        A = pow(g, a, p)
+
+        self.__diffie_hellman_keys[ip_addr] = {
+            "p": p,
+            "g": g,
+            "a": a,
+            "A": A,
+        }
+        keys = json.dumps({
+            "step": 1,
+            "p": p,
+            "g": g,
+            "A": A,
+        })
+
+        self.send_message_to_ip(Message(
+            MessagePurpose.EXCHANGE,
+            encoding.encode_ip_addr(self.ip_addr),
+            CommandData(keys),
+        ), ip_addr)
+
+    """
+    0. Alice generates p, g, a, A. Sends p, g, A to Bob (1).
+    1. Bob generates b, B, s. Sends B to Alice (2).
+    2. Alice generates s.
+
+    E.g.
+    0. Alice: p=23, g=5, a=7, A=17, Alice -> Bob (p, g, A)
+    1. Bob: b=9, B=11, s=7, Bob -> Alice (B,)
+    2. Alice: s=7
+    """
+
+    def __handle_key_exchange(self, mes: Message) -> None:
+        """
+        Handles the Diffie-Hellman key exchange after it is initialised.
+        """
+
+        ip_addr = mes.sender
+        self.__diffie_hellman_keys[ip_addr] = {}
+        keys = json.loads(mes.content.value)
+
+        if keys["step"] == 1: # bob
+            self.__diffie_hellman_keys[ip_addr]["p"] = keys["p"]
+            self.__diffie_hellman_keys[ip_addr]["g"] = keys["g"]
+            self.__diffie_hellman_keys[ip_addr]["A"] = keys["A"]
+
+            self.__diffie_hellman_keys[ip_addr]["b"] = secrets.choice(range(KEY_MIN, KEY_MAX))
+            self.__diffie_hellman_keys[ip_addr]["B"] = pow(
+                self.__diffie_hellman_keys[ip_addr]["g"],
+                self.__diffie_hellman_keys[ip_addr]["b"],
+                self.__diffie_hellman_keys[ip_addr]["p"],
+            )
+            self.__diffie_hellman_keys[ip_addr]["s"] = pow(
+                self.__diffie_hellman_keys[ip_addr]["A"],
+                self.__diffie_hellman_keys[ip_addr]["b"],
+                self.__diffie_hellman_keys[ip_addr]["p"],
+            )
+            self.send_message_to_ip(Message(
+                MessagePurpose.EXCHANGE,
+                encoding.encode_ip_addr(self.ip_addr),
+                CommandData(json.dumps({
+                    "step": 2,
+                    "B": self.__diffie_hellman_keys[ip_addr]["B"],
+                })),
+            ), ip_addr)
+
+        elif keys["step"] == 2: # alice
+            self.__diffie_hellman_keys[ip_addr]["B"] = keys["B"]
+            self.__diffie_hellman_keys[ip_addr]["s"] = pow(
+                self.__diffie_hellman_keys[ip_addr]["B"],
+                self.__diffie_hellman_keys[ip_addr]["a"],
+                self.__diffie_hellman_keys[ip_addr]["p"],
+            )
+            self.ui_data.append(UIData(
+                UIDataTopic.VERNAM_KEY,
+                True,
+                self.__diffie_hellman_keys[ip_addr]["s"],
+            ))
 
     def __handle_message(self, mes: Message) -> None:
         if mes.mes_purpose == MessagePurpose.EXCHANGE:
@@ -103,6 +192,10 @@ class Client(Node):
         elif mes.mes_purpose == MessagePurpose.GET_ALL_USERNAMES:
             usernames = json.loads(mes.content.value)
             self.ui_data.append(UIData(UIDataTopic.GET_ALL_USERNAMES, True, usernames))
+
+        elif mes.mes_purpose == MessagePurpose.GET_IP_ADDR:
+            ip_addr = mes.content.value
+            self.ui_data.append(UIData(UIDataTopic.GET_IP_ADDR, True, ip_addr))
 
         else:
             raise ValueError("Invalid MessagePurpose \"{mes.mes_purpose=}\".")
@@ -230,6 +323,17 @@ class Server(Node):
                 MessagePurpose.GET_ALL_USERNAMES,
                 self.ip_addr,
                 CommandData(usernames),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        # get a user's IP address given their username
+        elif mes.mes_purpose == MessagePurpose.GET_IP_ADDR:
+            ip_addr = mes.sender
+            username = mes.content.value.split("\0")[0]
+            username_ip_addr = self.__db.get_ip_addr_from_username(username)
+            self.__send_message(Message(
+                MessagePurpose.GET_IP_ADDR,
+                self.ip_addr,
+                CommandData(username_ip_addr),
             ), encoding.decode_ip_addr(ip_addr))
 
     def run(self) -> None:

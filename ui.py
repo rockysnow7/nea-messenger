@@ -1,5 +1,6 @@
 import os
 import sys
+import socket
 import secrets
 import json
 import sympy
@@ -10,6 +11,7 @@ from dataclasses import dataclass
 from node import Client, Server
 from chat_type import ChatType
 from rsa import gen_rsa_keys
+from vernam import vernam_encrypt, vernam_decrypt
 from message import Message, MessagePurpose, TextData, CommandData, Data
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 from ui_data import UIDataTopic
@@ -209,6 +211,65 @@ class UI:
     def __create_individual_chat_name(self, user_1: str, user_2: str) -> str:
         return "-".join(sorted([user_1, user_2]))
 
+    def __get_ip_addr_from_username(self, username: str) -> str:
+        self.client.send_message(Message(
+            MessagePurpose.GET_IP_ADDR,
+            encoding.encode_ip_addr(self.client.ip_addr),
+            CommandData(username),
+        ))
+
+        while not any(data.topic == UIDataTopic.GET_IP_ADDR for data in self.client.ui_data):
+            pass
+
+        for i in range(len(self.client.ui_data)):
+            if self.client.ui_data[i].topic == UIDataTopic.GET_IP_ADDR:
+                data = self.client.ui_data[i]
+                del self.client.ui_data[i]
+                return encoding.decode_ip_addr(data.value)
+
+    def __gen_vernam_key(self, ip_addr: str) -> int:
+        """
+        Begin the Diffie-Hellman key exchange with the client with the given IP
+        address.
+        """
+
+        self.client.start_key_exchange(ip_addr)
+
+        while not any(data.topic == UIDataTopic.VERNAM_KEY for data in self.client.ui_data):
+            pass
+
+        for i in range(len(self.client.ui_data)):
+            if self.client.ui_data[i].topic == UIDataTopic.VERNAM_KEY:
+                data = self.client.ui_data[i]
+                del self.client.ui_data[i]
+                return data.value
+
+    def __send_private_key(self, priv_key: tuple[int, int], recipient_username: str) -> bool:
+        """
+        Generates a key with the recipient by Diffie-Hellman, encrypts the key
+        with Vernam, and sends it to the recipient.
+        """
+
+        ip_addr = self.__get_ip_addr_from_username(recipient_username)
+        try:
+            vernam_key = self.__gen_vernam_key(ip_addr)
+        except socket.error: # return False if the recipient is offline
+            return False
+
+        priv_key_json = json.dumps(priv_key)
+        encrypted_key = vernam_encrypt(priv_key_json, vernam_key)
+        try:
+            self.client.send_message_to_ip(Message(
+                MessagePurpose.KEY,
+                encoding.encode_ip_addr(self.client.ip_addr),
+                CommandData(encrypted_key),
+            ), ip_addr)
+
+            return True
+
+        except socket.error: # return False if the recipient is offline
+            return False
+
     def __run_create_chat(self) -> None:
         """
         Allows the user to create a new chat.
@@ -239,31 +300,34 @@ class UI:
                             secrets.choice(list(sympy.primerange(100, 200))),
                             secrets.choice(list(sympy.primerange(100, 200))),
                         )
-                        data = json.dumps({
-                            "chat_name": chat_name,
-                            "chat_type": ChatType.INDIVIDUAL.value,
-                            "public_key": pub_key,
-                            "members": [self.username, other_username],
-                            "admins": [self.username, other_username],
-                        })
+                        if self.__send_private_key(priv_key, other_username):
+                            data = json.dumps({
+                                "chat_name": chat_name,
+                                "chat_type": ChatType.INDIVIDUAL.value,
+                                "public_key": pub_key,
+                                "members": [self.username, other_username],
+                                "admins": [self.username, other_username],
+                            })
 
-                        # create chat on server
-                        self.client.send_message(Message(
-                            MessagePurpose.CREATE_CHAT,
-                            encoding.encode_ip_addr(self.client.ip_addr),
-                            CommandData(data),
-                        ))
+                            # create chat on server
+                            self.client.send_message(Message(
+                                MessagePurpose.CREATE_CHAT,
+                                encoding.encode_ip_addr(self.client.ip_addr),
+                                CommandData(data),
+                            ))
 
-                        # save private key locally
-                        if not os.path.exists("user-chats"):
-                            os.mkdir("user-chats")
+                            # save private key locally
+                            if not os.path.exists("user-chats"):
+                                os.mkdir("user-chats")
 
-                        with open(f"user-chats/{chat_name}.json", "w+") as f:
-                            data = json.dump({
-                                "private_key": priv_key,
-                            }, f)
+                            with open(f"user-chats/{chat_name}.json", "w+") as f:
+                                data = json.dump({
+                                    "private_key": priv_key,
+                                }, f)
 
-                        self.__print("Created chat!")
+                            self.__print("Created chat!")
+                        else:
+                            self.__print("Other user is offline, please try again later.")
 
                     else:
                         print(f"You already have a chat with {other_username}!\n")

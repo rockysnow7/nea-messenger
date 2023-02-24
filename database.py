@@ -68,6 +68,21 @@ class Database:
 
         return username
 
+    def get_ip_addr_from_username(self, username: str) -> str:
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute(
+            """
+            SELECT ip_addr FROM users
+            WHERE username = ?
+            """,
+            (username,))
+        results = c.fetchall()
+        ip_addr = results[0][0]
+
+        return ip_addr
+
     def test_username_password_hash_match(self, username: str, password_hash: str) -> bool:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()

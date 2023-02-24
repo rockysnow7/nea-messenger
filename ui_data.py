@@ -8,6 +8,8 @@ class UIDataTopic(Enum):
     SETTINGS            = 2
     GET_USER_CHAT_NAMES = 3
     GET_ALL_USERNAMES   = 4
+    GET_IP_ADDR         = 5
+    VERNAM_KEY          = 6
 
 @dataclass
 class UIData:

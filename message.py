@@ -83,6 +83,7 @@ class MessagePurpose(Enum):
     SET_COLOR                   = 11
     GET_SETTINGS                = 12
     GET_ALL_USERNAMES           = 13
+    GET_IP_ADDR                 = 14
 
 class Message:
     def __init__(
