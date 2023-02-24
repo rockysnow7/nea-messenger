@@ -1,3 +1,4 @@
+import os
 import sys
 import socket
 import threading
@@ -253,13 +254,6 @@ class Server(Node):
             encoding.encode_ip_addr("192.168.0.12"), # phone
             encoding.hash_str("test"),
         )
-        #self.__db.create_new_chat(
-        #    "test",
-        #    ChatType.INDIVIDUAL,
-        #    0,
-        #    ["a"],
-        #    ["a"],
-        #)
 
     def __send_message(self, mes: Message, recipient_ip: str) -> None:
         self._send_bytes_to_ip(recipient_ip, bytes(mes), True)
