@@ -101,6 +101,7 @@ class Client(Node):
             "g": g,
             "A": A,
         })
+        print(f"alice, step 0, {self.__diffie_hellman_keys=}")
 
         self.send_message_to_ip(Message(
             MessagePurpose.EXCHANGE,
@@ -124,8 +125,6 @@ class Client(Node):
         Handles the Diffie-Hellman key exchange after it is initialised.
         """
 
-        print(f"{self.__diffie_hellman_keys=}")
-
         ip_addr = mes.sender
         self.__diffie_hellman_keys[ip_addr] = {}
         keys = json.loads(mes.content.value)
@@ -146,6 +145,7 @@ class Client(Node):
                 self.__diffie_hellman_keys[ip_addr]["b"],
                 self.__diffie_hellman_keys[ip_addr]["p"],
             )
+            print(f"bob, step 1, {self.__diffie_hellman_keys=}")
             self.send_message_to_ip(Message(
                 MessagePurpose.EXCHANGE,
                 encoding.encode_ip_addr(self.ip_addr),
@@ -162,6 +162,7 @@ class Client(Node):
                 self.__diffie_hellman_keys[ip_addr]["a"],
                 self.__diffie_hellman_keys[ip_addr]["p"],
             )
+            print(f"alice, step 2, {self.__diffie_hellman_keys=}")
             self.ui_data.append(UIData(
                 UIDataTopic.VERNAM_KEY,
                 True,
