@@ -19,7 +19,7 @@ from rsa import rsa_encrypt, rsa_decrypt
 from ui_data import UIData, UIDataTopic
 
 
-SERVER_IP_ADDR = "192.168.0.35" # home machine
+SERVER_IP_ADDR = "192.168.0.35"
 
 CLIENT_SEND_PORT = 8000
 SERVER_SEND_PORT = 8001
@@ -125,6 +125,7 @@ class Client(Node):
         """
 
         ip_addr = mes.sender
+        print(f"{ip_addr=}")
         self.__diffie_hellman_keys[ip_addr] = {}
         keys = json.loads(mes.content.value)
 
@@ -220,6 +221,11 @@ class Server(Node):
         self.__db.create_new_user(
             "finn",
             encoding.encode_ip_addr(SERVER_IP_ADDR),
+            encoding.hash_str("test"),
+        )
+        self.__db.create_new_user(
+            "other",
+            encoding.encode_ip_addr("192.168.0.12"), # phone
             encoding.hash_str("test"),
         )
         #self.__db.create_new_chat(

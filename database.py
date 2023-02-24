@@ -63,7 +63,6 @@ class Database:
             """,
             (ip_addr,))
         results = c.fetchall()
-        print(f"{results=}")
         username = results[0][0]
 
         return username
