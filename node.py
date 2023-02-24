@@ -176,6 +176,23 @@ class Client(Node):
         if mes.mes_purpose == MessagePurpose.EXCHANGE:
             self.__handle_key_exchange(mes)
 
+        elif mes.mes_purpose == MessagePurpose.KEY:
+            encrypted_data = mes.content.value
+            sender_ip = mes.sender
+            decrypted_data = json.loads(vernam_decrypt(
+                encrypted_data,
+                self.__diffie_hellman_keys[sender_ip]["s"],
+            ))
+
+            # save private key locally
+            if not os.path.exists("user-chats"):
+                os.mkdir("user-chats")
+
+            with open(f"user-chats/{decrypted_data['chat_name']}.json", "w+") as f:
+                data = json.dump({
+                    "privKey": decrypted_data["privKey"],
+                }, f)
+
         elif mes.mes_purpose == MessagePurpose.CREATE_USER_DONE:
             self.ui_data.append(UIData(UIDataTopic.CREATE_USER, True))
 

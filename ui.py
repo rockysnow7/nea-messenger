@@ -244,10 +244,16 @@ class UI:
                 del self.client.ui_data[i]
                 return data.value
 
-    def __send_private_key(self, priv_key: tuple[int, int], recipient_username: str) -> bool:
+    def __send_private_key(
+        self,
+        priv_key: tuple[int, int],
+        recipient_username: str,
+        chat_name: str,
+    ) -> bool:
         """
-        Generates a key with the recipient by Diffie-Hellman, encrypts the key
-        with Vernam, and sends it to the recipient.
+        Generates a key with the recipient by Diffie-Hellman, pairs it with the
+        relevant chat name, encrypts both with Vernam, and sends it to the
+        recipient.
         """
 
         ip_addr = self.__get_ip_addr_from_username(recipient_username)
@@ -256,13 +262,16 @@ class UI:
         except socket.error: # return False if the recipient is offline
             return False
 
-        priv_key_json = json.dumps(priv_key)
-        encrypted_key = vernam_encrypt(priv_key_json, vernam_key)
+        json_data = json.dumps({
+            "privKey": priv_key,
+            "chatName": chat_name,
+        })
+        encrypted_data = vernam_encrypt(json_data, vernam_key)
         try:
             self.client.send_message_to_ip(Message(
                 MessagePurpose.KEY,
                 encoding.encode_ip_addr(self.client.ip_addr),
-                CommandData(encrypted_key),
+                CommandData(encrypted_data),
             ), ip_addr)
 
             return True
@@ -300,7 +309,11 @@ class UI:
                             secrets.choice(list(sympy.primerange(100, 200))),
                             secrets.choice(list(sympy.primerange(100, 200))),
                         )
-                        if self.__send_private_key(priv_key, other_username):
+                        if self.__send_private_key(
+                            priv_key,
+                            other_username,
+                            chat_name,
+                        ):
                             data = json.dumps({
                                 "chat_name": chat_name,
                                 "chat_type": ChatType.INDIVIDUAL.value,
@@ -322,7 +335,7 @@ class UI:
 
                             with open(f"user-chats/{chat_name}.json", "w+") as f:
                                 data = json.dump({
-                                    "private_key": priv_key,
+                                    "privKey": priv_key,
                                 }, f)
 
                             self.__print("Created chat!")
