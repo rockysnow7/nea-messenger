@@ -9,6 +9,7 @@ import secrets
 import ip
 import encoding
 import database
+import vernam
 
 from typing import Callable
 from datetime import datetime
@@ -180,7 +181,7 @@ class Client(Node):
         elif mes.mes_purpose == MessagePurpose.KEY:
             encrypted_data = mes.content.value
             sender_ip = mes.sender
-            decrypted_data = json.loads(vernam_decrypt(
+            decrypted_data = json.loads(vernam.crypt(
                 encrypted_data,
                 self.__diffie_hellman_keys[sender_ip]["s"],
             ))

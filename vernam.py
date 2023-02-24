@@ -1,27 +1,23 @@
 import math
-import itertools
 
 
-def str_to_bits(s: str) -> list[int]:
-    s_bytes = list(itertools.chain(bin(c)[2:].zfill(8) for c in bytes(s, encoding="utf-8")))
-    s_bits = [int(i) for i in "".join(s_bytes)]
+def int_to_str(n: int) -> str:
+    n_bits = bin(n)[2:]
+    n_bits = n_bits.zfill(len(n_bits) + len(n_bits) % 8)
+    n_bytes = [n_bits[i:i+8] for i in range(0, len(n_bits), 8)]
+    n_chars = [chr(int(b, 2)) for b in n_bytes]
 
-    return s_bits
+    return "".join(n_chars)
 
-def bits_to_str(bits: list[int]) -> str:
-    ...
+def str_xor(a: str, b: str) -> str:
+    c = ""
+    for i in range(len(a)):
+        c += chr(ord(a[i]) ^ ord(b[i]))
 
-def int_to_bits(n: int) -> list[int]:
-    return [int(i) for i in bin(n)[2:].zfill(8)]
+    return c
 
-def vernam_encrypt(s: str, key: int) -> str:
-    s_bits = str_to_bits(s)
-    key_bits = int_to_bits(key)
-    key_bits_full = key_bits * math.ceil(len(s_bits) / len(key_bits))
-    xor_bits = [s_bits[i] ^ key_bits_full[i] for i in range(len(s_bits))]
-    xor_s = bits_to_str(xor_bits)
+def crypt(s: str, key: int) -> str:
+    key = int_to_str(key)
+    key *= math.ceil(len(s) / len(key))
 
-    return xor_s
-
-def vernam_decrypt(s: str, key: int) -> str:
-    ...
+    return str_xor(s, key)

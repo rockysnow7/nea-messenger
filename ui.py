@@ -6,12 +6,12 @@ import json
 import sympy
 import encoding
 import ip
+import vernam
 
 from dataclasses import dataclass
 from node import Client, Server
 from chat_type import ChatType
 from rsa import gen_rsa_keys
-from vernam import vernam_encrypt, vernam_decrypt
 from message import Message, MessagePurpose, TextData, CommandData, Data
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 from ui_data import UIDataTopic
@@ -266,7 +266,7 @@ class UI:
             "privKey": priv_key,
             "chatName": chat_name,
         })
-        encrypted_data = vernam_encrypt(json_data, vernam_key)
+        encrypted_data = vernam.crypt(json_data, vernam_key)
         try:
             self.client.send_message_to_ip(Message(
                 MessagePurpose.KEY,
