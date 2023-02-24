@@ -239,6 +239,9 @@ class Server(Node):
     def __init__(self) -> None:
         super().__init__(False)
 
+        if not os.path.exists("settings"):
+            os.mkdir("settings")
+
         self.__db = database.Database()
         self.__db.create_new_user(
             "finn",
