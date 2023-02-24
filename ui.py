@@ -252,7 +252,7 @@ class UI:
 
         ip_addr = self.__get_ip_addr_from_username(recipient_username)
         try:
-            vernam_key = self.__gen_vernam_key(ip_addr)
+            vernam_key = self.__gen_vernam_key(encoding.encode_ip_addr(ip_addr))
         except socket.error: # return False if the recipient is offline
             return False
 
