@@ -126,10 +126,11 @@ class Client(Node):
         Handles the Diffie-Hellman key exchange after it is initialised.
         """
 
-        ip_addr = encoding.decode_ip_addr(mes.sender)
+        ip_addr = mes.sender
         keys = json.loads(mes.content.value)
 
         if keys["step"] == 1: # bob
+            self.__diffie_hellman_keys[ip_addr] = {}
             self.__diffie_hellman_keys[ip_addr]["p"] = keys["p"]
             self.__diffie_hellman_keys[ip_addr]["g"] = keys["g"]
             self.__diffie_hellman_keys[ip_addr]["A"] = keys["A"]
