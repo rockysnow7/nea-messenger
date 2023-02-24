@@ -343,9 +343,9 @@ class UI:
                             self.__print("Other user is offline, please try again later.")
 
                     else:
-                        print(f"You already have a chat with {other_username}!\n")
+                        self.__print(f"You already have a chat with {other_username}!\n")
                 else:
-                    print("That user does not exist.")
+                    self.__print("That user does not exist.")
 
             elif type_option == 3:
                 chat_name = self.__input("\nChat name: ")
@@ -371,7 +371,7 @@ class UI:
                     # TODO
 
                 else:
-                    print("You already have a chat with that name!\n")
+                    self.__print("You already have a chat with that name!\n")
 
     def __run_chat(self, chat_name: str) -> None:
         """
