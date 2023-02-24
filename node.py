@@ -84,6 +84,7 @@ class Client(Node):
         Initiates the Diffie-Hellman key exchange.
         """
 
+        self.__diffie_hellman_keys[ip_addr] = {}
         p = secrets.choice(list(sympy.primerange(KEY_MIN, KEY_MAX)))
         g = primitive_root_mod(p)
         a = secrets.choice(range(1000))
@@ -126,7 +127,6 @@ class Client(Node):
         """
 
         ip_addr = mes.sender
-        self.__diffie_hellman_keys[ip_addr] = {}
         keys = json.loads(mes.content.value)
 
         if keys["step"] == 1: # bob
