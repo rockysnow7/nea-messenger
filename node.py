@@ -124,8 +124,9 @@ class Client(Node):
         Handles the Diffie-Hellman key exchange after it is initialised.
         """
 
+        print(f"{self.__diffie_hellman_keys=}")
+
         ip_addr = mes.sender
-        print(f"{ip_addr=}")
         self.__diffie_hellman_keys[ip_addr] = {}
         keys = json.loads(mes.content.value)
 
