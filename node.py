@@ -190,7 +190,7 @@ class Client(Node):
             if not os.path.exists("user-chats"):
                 os.mkdir("user-chats")
 
-            with open(f"user-chats/{decrypted_data['chat_name']}.json", "w+") as f:
+            with open(f"user-chats/{decrypted_data['chatName']}.json", "w+") as f:
                 data = json.dump({
                     "privKey": decrypted_data["privKey"],
                 }, f)
