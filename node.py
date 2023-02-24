@@ -204,7 +204,7 @@ class Client(Node):
             self.ui_data.append(UIData(UIDataTopic.GET_IP_ADDR, True, ip_addr))
 
         else:
-            raise ValueError("Invalid MessagePurpose \"{mes.mes_purpose=}\".")
+            raise ValueError(f"Invalid MessagePurpose \"{mes.mes_purpose=}\".")
 
     def run(self) -> None:
         self.is_running = True
