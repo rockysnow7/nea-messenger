@@ -152,7 +152,7 @@ class Client(Node):
                     "step": 2,
                     "B": self.__diffie_hellman_keys[ip_addr]["B"],
                 })),
-            ), ip_addr)
+            ), encoding.decode_ip_addr(ip_addr))
 
         elif keys["step"] == 2: # alice
             self.__diffie_hellman_keys[ip_addr]["B"] = keys["B"]
