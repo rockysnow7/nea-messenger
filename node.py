@@ -110,7 +110,7 @@ class Client(Node):
             MessagePurpose.EXCHANGE,
             encoding.encode_ip_addr(self.ip_addr),
             CommandData(keys),
-        ), self.decode_ip_addr(ip_addr))
+        ), encoding.decode_ip_addr(ip_addr))
 
     """
     0. Alice generates p, g, a, A. Sends p, g, A to Bob (1).
