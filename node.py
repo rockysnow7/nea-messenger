@@ -84,6 +84,8 @@ class Client(Node):
         Initiates the Diffie-Hellman key exchange.
         """
 
+        print(f"{ip_addr=}")
+
         self.__diffie_hellman_keys[ip_addr] = {}
         p = secrets.choice(list(sympy.primerange(KEY_MIN, KEY_MAX)))
         g = primitive_root_mod(p)
@@ -108,7 +110,7 @@ class Client(Node):
             MessagePurpose.EXCHANGE,
             encoding.encode_ip_addr(self.ip_addr),
             CommandData(keys),
-        ), ip_addr)
+        ), self.decode_ip_addr(ip_addr))
 
     """
     0. Alice generates p, g, a, A. Sends p, g, A to Bob (1).
