@@ -405,6 +405,7 @@ class UI:
                                 "privKey": priv_key,
                             }, f, indent=4)
 
+                        self.__print("Created chat!")
                     else:
                         self.__print("All users were offline, please try again later.")
                 else:
