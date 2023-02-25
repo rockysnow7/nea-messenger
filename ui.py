@@ -7,11 +7,11 @@ import sympy
 import encoding
 import ip
 import vernam
+import rsa
 
 from dataclasses import dataclass
 from node import Client, Server
 from chat_type import ChatType
-from rsa import gen_rsa_keys
 from message import Message, MessagePurpose, TextData, CommandData, Data
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 from ui_data import UIDataTopic
@@ -305,7 +305,7 @@ class UI:
                     chat_name = self.__create_individual_chat_name(self.username, other_username)
                     chat_names = self.__get_chat_names()
                     if chat_name not in chat_names: # check if user already has this chat
-                        pub_key, priv_key = gen_rsa_keys(
+                        pub_key, priv_key = rsa.gen_keys(
                             secrets.choice(list(sympy.primerange(100, 200))),
                             secrets.choice(list(sympy.primerange(100, 200))),
                         )
@@ -351,7 +351,7 @@ class UI:
                 chat_name = self.__input("\nChat name: ")
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
-                    pub_key, priv_key = gen_rsa_keys(
+                    pub_key, priv_key = rsa.gen_keys(
                         secrets.choice(list(sympy.primerange(100, 200))),
                         secrets.choice(list(sympy.primerange(100, 200))),
                     )

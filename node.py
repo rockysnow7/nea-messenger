@@ -10,6 +10,7 @@ import ip
 import encoding
 import database
 import vernam
+import rsa
 
 from typing import Callable
 from datetime import datetime
@@ -17,7 +18,6 @@ from message import Message, MessagePurpose, Data, TextData, CommandData
 from chat_type import ChatType
 from constants import USERNAME_MAX_LEN
 from math_funcs import primitive_root_mod
-from rsa import rsa_encrypt, rsa_decrypt
 from ui_data import UIData, UIDataTopic
 
 
@@ -75,7 +75,7 @@ class Client(Node):
         """
 
         if encrypt:
-            mes = rsa_encrypt(mes)
+            mes = rsa.encrypt(mes)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
     def send_message_to_ip(self, mes: Message, ip_addr: str) -> None:
