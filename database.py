@@ -181,10 +181,10 @@ class Database:
 
         if os.path.exists("server-db.db"):
             os.remove("server-db.db")
-        
+
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
-    
+
         c.execute(f"""
                   CREATE TABLE users(
                   username VARCHAR({USERNAME_MAX_LEN}) PRIMARY KEY,

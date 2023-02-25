@@ -351,25 +351,62 @@ class UI:
                 chat_name = self.__input("\nChat name: ")
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
+                    all_usernames = self.__get_all_usernames()
+                    other_usernames = []
+                    i = 1
+                    while True:
+                        other = self.__input(f"Other user {i} (leave blank to stop): ")
+                        if not other:
+                            break
+
+                        if other in all_usernames:
+                            other_usernames.append(other)
+                            i += 1
+                        else:
+                            self.__print("This user does not exist!")
+
                     pub_key, priv_key = rsa.gen_keys(
                         secrets.choice(list(sympy.primerange(100, 200))),
                         secrets.choice(list(sympy.primerange(100, 200))),
                     )
-                    data = json.dumps({
-                        "chat_name": chat_name,
-                        "chat_type": ChatType.GROUP.value,
-                        "public_key": pub_key,
-                        "members": [self.username, other_username],
-                        "admins": [self.username, other_username],
-                    })
-                    self.client.send_message(Message(
-                        MessagePurpose.CREATE_CHAT,
-                        encoding.encode_ip_addr(self.client.ip_addr),
-                        CommandData(data),
-                    ))
 
-                    # TODO
+                    added = []
+                    for username in other_usernames:
+                        if self.__send_private_key(
+                            priv_key,
+                            username,
+                            chat_name,
+                        ):
+                            added.append(username)
 
+                    if added:
+                        for username in other_usernames:
+                            if username not in added:
+                                self.__print(f"{username} is offline, try adding them later!")
+
+                        data = json.dumps({
+                            "chat_name": chat_name,
+                            "chat_type": ChatType.GROUP.value,
+                            "public_key": pub_key,
+                            "members": [self.username] + added,
+                            "admins": [self.username],
+                        })
+                        self.client.send_message(Message(
+                            MessagePurpose.CREATE_CHAT,
+                            encoding.encode_ip_addr(self.client.ip_addr),
+                            CommandData(data),
+                        ))
+
+                        if not os.path.exists("user-chats"):
+                            os.mkdir("user-chats")
+
+                        with open(f"user-chats/{chat_name}.json", "w+") as f:
+                            data = json.dump({
+                                "privKey": priv_key,
+                            }, f, indent=4)
+
+                    else:
+                        self.__print("All users were offline, please try again later.")
                 else:
                     self.__print("You already have a chat with that name!\n")
 
@@ -392,8 +429,6 @@ class UI:
 
         self.__update_settings()
 
-        user_chats = self.__get_chat_names()
-
         os.system("clear")
         self.__print("MAIN MENU\n")
 
@@ -401,6 +436,8 @@ class UI:
             self.__print("1) log out")
             self.__print("2) edit general settings")
             self.__print("3) create new chat")
+
+            user_chats = self.__get_chat_names()
             for i in range(len(user_chats)):
                 self.__print(f"{i+4}) view {user_chats[i]}")
 
