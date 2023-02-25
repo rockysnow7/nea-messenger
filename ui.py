@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 import socket
 import secrets
 import json
@@ -39,6 +40,10 @@ class UI:
 
     def __print(self, message: str) -> None:
         print(COLORS[self.settings["color"]] + message + Color.RESET)
+
+    def __print_with_delay(self, message: str) -> None:
+        self.__print(message)
+        time.sleep(0.5)
 
     def __input(self, message: str) -> str:
         response = input(COLORS[self.settings["color"]] + message)
@@ -173,10 +178,9 @@ class UI:
 
         self.__update_settings()
 
-        os.system("clear")
-        self.__print("GENERAL SETTINGS\n")
-
         while True:
+            os.system("clear")
+            self.__print("GENERAL SETTINGS\n")
             self.__print("1) go back")
             self.__print("2) change interface color")
 
@@ -259,7 +263,7 @@ class UI:
         ip_addr = self.__get_ip_addr_from_username(recipient_username)
         try:
             vernam_key = self.__gen_vernam_key(encoding.encode_ip_addr(ip_addr))
-        except socket.error: # return False if the recipient is offline
+        except socket.print_with_delay: # return False if the recipient is offline
             return False
 
         json_data = json.dumps({
@@ -276,7 +280,7 @@ class UI:
 
             return True
 
-        except socket.error: # return False if the recipient is offline
+        except socket.print_with_delay: # return False if the recipient is offline
             return False
 
     def __run_create_chat(self) -> None:
@@ -286,10 +290,9 @@ class UI:
 
         self.__update_settings()
 
-        os.system("clear")
-        self.__print("CREATE CHAT\n")
-
         while True:
+            os.system("clear")
+            self.__print("CREATE CHAT\n")
             self.__print("1) go back")
             self.__print("2) single chat")
             self.__print("3) group chat")
@@ -338,14 +341,13 @@ class UI:
                                     "privKey": priv_key,
                                 }, f, indent=4)
 
-                            self.__print("Created chat!")
+                            self.__print_with_delay("\nCreated chat!\n")
                         else:
-                            self.__print("Other user is offline, please try again later.")
-
+                            self.__print_with_delay("\nOther user is offline, please try again later.")
                     else:
-                        self.__print(f"You already have a chat with {other_username}!\n")
+                        self.__print_with_delay(f"\nYou already have a chat with {other_username}!\n")
                 else:
-                    self.__print("That user does not exist.")
+                    self.__print_with_delay("\nThat user does not exist.")
 
             elif type_option == 3:
                 chat_name = self.__input("\nChat name: ")
@@ -355,7 +357,7 @@ class UI:
                     other_usernames = []
                     i = 1
                     while True:
-                        other = self.__input(f"Other user {i} (leave blank to stop): ")
+                        other = self.__input(f"\nOther user {i} (leave blank to stop): ")
                         if not other:
                             break
 
@@ -363,7 +365,7 @@ class UI:
                             other_usernames.append(other)
                             i += 1
                         else:
-                            self.__print("This user does not exist!")
+                            self.__print("\nThis user does not exist!")
 
                     pub_key, priv_key = rsa.gen_keys(
                         secrets.choice(list(sympy.primerange(100, 200))),
@@ -405,11 +407,11 @@ class UI:
                                 "privKey": priv_key,
                             }, f, indent=4)
 
-                        self.__print("Created chat!")
+                        self.__print_with_delay("\nCreated chat!\n")
                     else:
-                        self.__print("All users were offline, please try again later.")
+                        self.__print_with_delay("\nAll users were offline, please try again later.")
                 else:
-                    self.__print("You already have a chat with that name!\n")
+                    self.__print_with_delay("\nYou already have a chat with that name!\n")
 
     def __run_chat(self, chat_name: str) -> None:
         """
@@ -430,10 +432,9 @@ class UI:
 
         self.__update_settings()
 
-        os.system("clear")
-        self.__print("MAIN MENU\n")
-
         while True:
+            os.system("clear")
+            self.__print("MAIN MENU\n")
             self.__print("1) log out")
             self.__print("2) edit general settings")
             self.__print("3) create new chat")
@@ -453,8 +454,11 @@ class UI:
             elif option == 3:
                 self.__run_create_chat()
 
-            elif option <= len(user_chats) - 3:
-                self.__run_chat(user_chats[option - 3])
+            elif option - 4 < len(user_chats):
+                self.__run_chat(user_chats[option - 4])
+
+            else:
+                self.__print_with_delay("\nPlease enter a valid option.\n")
 
     def run_login_page(self) -> None:
         """
@@ -464,10 +468,9 @@ class UI:
 
         self.__update_settings()
 
-        os.system("clear")
-        self.__print("SIGN UP OR LOG IN\n")
-
         while True:
+            os.system("clear")
+            self.__print("SIGN UP OR LOG IN\n")
             self.__print("1) exit")
             self.__print("2) sign up")
             self.__print("3) log in")
@@ -480,15 +483,15 @@ class UI:
             elif option == 2:
                 if self.__create_user():
                     self.is_logged_in = True
-                    self.__print("\nCreated user!\n")
+                    self.__print_with_delay("\nCreated user!\n")
                     self.__run_main_menu()
                 else:
-                    self.__print("\nUsername already taken, please choose a different username.\n")
+                    self.__print_with_delay("\nUsername already taken, please choose a different username.\n")
 
             elif option == 3:
                 if self.__log_in():
                     self.is_logged_in = True
-                    self.__print("\nLogged in!\n")
+                    self.__print_with_delay("\nLogged in!\n")
                     self.__run_main_menu()
                 else:
-                    self.__print("\nUsername or password is wrong, please try again.\n")
+                    self.__print_with_delay("\nUsername or password is wrong, please try again.\n")
