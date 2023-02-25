@@ -188,7 +188,7 @@ class Client(Node):
             with open(f"user-chats/{decrypted_data['chatName']}.json", "w+") as f:
                 data = json.dump({
                     "privKey": decrypted_data["privKey"],
-                }, f)
+                }, f, indent=4)
 
         elif mes.mes_purpose == MessagePurpose.CREATE_USER_DONE:
             self.ui_data.append(UIData(UIDataTopic.CREATE_USER, True))

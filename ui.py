@@ -336,7 +336,7 @@ class UI:
                             with open(f"user-chats/{chat_name}.json", "w+") as f:
                                 data = json.dump({
                                     "privKey": priv_key,
-                                }, f)
+                                }, f, indent=4)
 
                             self.__print("Created chat!")
                         else:
