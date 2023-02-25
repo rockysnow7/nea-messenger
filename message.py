@@ -84,6 +84,8 @@ class MessagePurpose(Enum):
     GET_SETTINGS                = 12
     GET_ALL_USERNAMES           = 13
     GET_IP_ADDR                 = 14
+    GET_CHAT_DATA               = 15
+    GET_CHAT_MESSAGES           = 16
 
 class Message:
     def __init__(

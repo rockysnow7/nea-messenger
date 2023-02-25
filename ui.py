@@ -171,6 +171,57 @@ class UI:
                 del self.client.ui_data[i]
                 return data.value
 
+    def __get_chat_data(self, chat_name: str) -> dict[str, any]:
+        self.client.send_message(Message(
+            MessagePurpose.GET_CHAT_DATA,
+            encoding.encode_ip_addr(self.client.ip_addr),
+            CommandData(chat_name),
+        ))
+
+        while not any(data.topic == UIDataTopic.GET_CHAT_DATA for data in self.client.ui_data):
+            pass
+
+        for i in range(len(self.client.ui_data)):
+            if self.client.ui_data[i].topic == UIDataTopic.GET_CHAT_DATA:
+                data = self.client.ui_data[i]
+                del self.client.ui_data[i]
+                return data.value
+
+    def __get_chat_messages(
+        self,
+        chat_name: str,
+        num_messages: int,
+    ) -> list[Message]:
+        data = json.dumps({
+            "chatName": chat_name,
+            "numMessages": num_messages,
+        })
+
+        self.client.send_message(Message(
+            MessagePurpose.GET_CHAT_MESSAGES,
+            encoding.encode_ip_addr(self.client.ip_addr),
+            CommandData(data),
+        ))
+
+        while not any(data.topic == UIDataTopic.GET_CHAT_MESSAGES for data in self.client.ui_data):
+            pass
+
+        for i in range(len(self.client.ui_data)):
+            if self.client.ui_data[i].topic == UIDataTopic.GET_CHAT_MESSAGES:
+                data = self.client.ui_data[i]
+                del self.client.ui_data[i]
+                break
+
+        with open(f"user-chats/{chat_name}.json", "r") as f:
+            priv_key = json.load(f)
+        priv_key = tuple(priv_key["privKey"])
+
+        messages = data.value
+        for i in range(len(messages)):
+            messages[i] = rsa.decrypt(messages[i], priv_key)
+
+        return messages
+
     def __run_general_settings(self) -> None:
         """
         Allows the user to edit general settings.
@@ -423,7 +474,10 @@ class UI:
         os.system("clear")
         self.__print(f"{chat_name}\n")
 
-        ...
+        chat_data = self.__get_chat_data(chat_name)
+        messages = self.__get_chat_messages(chat_name)
+
+        print(messages)
 
     def __run_main_menu(self) -> None:
         """

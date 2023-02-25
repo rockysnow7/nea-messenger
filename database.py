@@ -6,7 +6,7 @@ import sqlite3
 import encoding
 
 from chat_type import ChatType
-from message import Message
+from message import Message, MessagePurpose
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 
 
@@ -109,6 +109,46 @@ class Database:
 
         return user_chat_names
 
+    def get_chat_data(self, chat_name: str) -> dict[str, any]:
+        with open(f"chats/{chat_name}.json", "r") as f:
+            data = json.load(f)
+        return data
+
+    def get_chat_messages(
+        self,
+        chat_name: str,
+        num_messages: int,
+    ) -> list[Message]:
+        chat_name = "_" + encoding.hash_str(chat_name)
+
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute("SELECT MAX(rowid) FROM ?", (chat_name,))
+        max_id = c.fetchall()[0][0]
+        min_id = max(1, max_id - num_messages)
+
+        c.execute(
+            """
+            SELECT * FROM ?
+            WHERE rowid >= ?;
+            """,
+            (chat_name, min_id)
+        )
+        results = c.fetchall()
+
+        messages = []
+        for (mes_purpose, sender_username, content) in results:
+            messages.append(Message(
+                MessagePurpose(mes_purpose),
+                sender_username,
+                content,
+                chat_name=chat_name,
+                is_encrypted=True,
+            ))
+
+        return messages
+
     def create_new_user(
         self,
         username: str,
@@ -163,8 +203,8 @@ class Database:
         """
 
         data = {
-            "chat-type": chat_type.value,
-            "public-key": list(public_key),
+            "chatType": chat_type.value,
+            "pubKey": list(public_key),
             "members": members,
             "admins": admins,
             "nicknames": {m: m for m in members},

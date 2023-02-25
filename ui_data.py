@@ -3,13 +3,15 @@ from dataclasses import dataclass
 
 
 class UIDataTopic(Enum):
-    CREATE_USER         = 0
-    LOG_IN              = 1
-    SETTINGS            = 2
-    GET_USER_CHAT_NAMES = 3
-    GET_ALL_USERNAMES   = 4
-    GET_IP_ADDR         = 5
-    VERNAM_KEY          = 6
+    VERNAM_KEY          = 0
+    CREATE_USER         = 1
+    LOG_IN              = 2
+    SETTINGS            = 3
+    GET_USER_CHAT_NAMES = 4
+    GET_ALL_USERNAMES   = 5
+    GET_IP_ADDR         = 6
+    GET_CHAT_DATA       = 7
+    GET_CHAT_MESSAGES   = 8
 
 @dataclass
 class UIData:

@@ -217,6 +217,15 @@ class Client(Node):
             ip_addr = mes.content.value
             self.ui_data.append(UIData(UIDataTopic.GET_IP_ADDR, True, ip_addr))
 
+        elif mes.mes_purpose == MessagePurpose.GET_CHAT_DATA:
+            chat_data = json.loads(mes.content.value)
+            self.ui_data.append(UIData(UIDataTopic.GET_CHAT_DATA, True, chat_data))
+
+        elif mes.mes_purpose == MessagePurpose.GET_CHAT_MESSAGES:
+            messages = json.loads(mes.content.value)
+            messages = [Message.from_bytes(message) for message in messages]
+            self.ui_data.append(UIData(UIDataTopic.GET_CHAT_MESSAGES, True, messages))
+
         else:
             raise ValueError(f"Invalid MessagePurpose \"{mes.mes_purpose=}\".")
 
@@ -355,6 +364,35 @@ class Server(Node):
                 MessagePurpose.GET_IP_ADDR,
                 self.ip_addr,
                 CommandData(username_ip_addr),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        # get a chat's data
+        elif mes.mes_purpose == MessagePurpose.GET_CHAT_DATA:
+            ip_addr = mes.sender
+            chat_data = self.__db.get_chat_data(mes.content.value)
+            chat_data = json.dumps(chat_data)
+
+            self.__send_message(Message(
+                MessagePurpose.GET_CHAT_DATA,
+                self.ip_addr,
+                CommandData(chat_data),
+            ), encoding.decode_ip_addr(ip_addr))
+
+        # get the n most recent messages from a chat
+        elif mes.mes_purpose == MessagePurpose.GET_CHAT_MESSAGES:
+            ip_addr = mes.sender
+            request = json.loads(mes.content.value)
+            messages = self.__db.get_chat_messages(
+                request["chatName"],
+                request["numMessages"],
+            )
+            messages = [bytes(message) for message in messages]
+            messages = json.dumps(messages)
+
+            self.__send_message(Message(
+                MessagePurpose.GET_CHAT_MESSAGES,
+                self.ip_addr,
+                CommandData(messages),
             ), encoding.decode_ip_addr(ip_addr))
 
     def run(self) -> None:
