@@ -478,6 +478,7 @@ class UI:
         messages = self.__get_chat_messages(chat_name, 10)
 
         print(messages)
+        input()
 
     def __run_main_menu(self) -> None:
         """

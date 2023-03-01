@@ -31,9 +31,7 @@ def encrypt(mes: Message, pub_key: tuple[int, int]) -> Message:
     return Message(
         mes.mes_purpose,
         mes.sender,
-        mes.recipient,
-        type(mes.content)([pow(m, e, n) for m in mes.content]),
-        metadata=Data([pow(m, e, n) for m in mes.metadata]),
+        type(mes.content)([pow(ord(m), e, n) for m in mes.content]),
         is_encrypted=True,
     )
 
@@ -47,7 +45,5 @@ def decrypt(mes: Message, priv_key: tuple[int, int]) -> Message:
     return Message(
         mes.mes_purpose,
         mes.sender,
-        mes.recipient,
-        type(mes.content)([pow(m, d, n) for m in mes.content]),
-        metadata=Data([pow(m, d, n) for m in mes.metadata]),
+        type(mes.content)([pow(ord(m), d, n) for m in mes.content]),
     )

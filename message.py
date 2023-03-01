@@ -35,8 +35,10 @@ class Data:
         return self_dict_json
 
 class TextData(Data):
-    def __init__(self, value: str):
+    def __init__(self, value: str | list[int]):
         self.value = value
+        if isinstance(self.value, list):
+            self.value = "".join(chr(c) for c in self.value)
 
     def __repr__(self) -> str:
         return f"TextData(\"{self.value}\")"

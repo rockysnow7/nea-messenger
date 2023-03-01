@@ -57,7 +57,8 @@ class Node:
         while self.is_running:
             conn, addr = self.__recv_socket.accept()
             with conn:
-                data = conn.recv(1044)
+                #data = conn.recv(1044)
+                data = conn.recv(100000)
                 if data:
                     mes = Message.from_bytes(data)
                     handler_method(mes)
@@ -386,7 +387,7 @@ class Server(Node):
                 request["chatName"],
                 request["numMessages"],
            )
-            messages = [bytes(message) for message in messages]
+            messages = [bytes(message).decode("utf-8") for message in messages]
             messages = json.dumps(messages)
 
             self.__send_message(Message(
