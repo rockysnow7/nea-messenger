@@ -475,7 +475,7 @@ class UI:
         self.__print(f"{chat_name}\n")
 
         chat_data = self.__get_chat_data(chat_name)
-        messages = self.__get_chat_messages(chat_name)
+        messages = self.__get_chat_messages(chat_name, 10)
 
         print(messages)
 

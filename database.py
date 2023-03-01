@@ -124,16 +124,19 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        c.execute("SELECT MAX(rowid) FROM ?", (chat_name,))
+        c.execute(f"SELECT MAX(rowid) FROM {chat_name}")
         max_id = c.fetchall()[0][0]
+        if max_id is None:
+            return []
+
         min_id = max(1, max_id - num_messages)
 
         c.execute(
-            """
-            SELECT * FROM ?
+            f"""
+            SELECT * FROM {chat_name}
             WHERE rowid >= ?;
             """,
-            (chat_name, min_id)
+            (min_id,)
         )
         results = c.fetchall()
 
