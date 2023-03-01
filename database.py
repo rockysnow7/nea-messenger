@@ -6,7 +6,7 @@ import sqlite3
 import encoding
 
 from chat_type import ChatType
-from message import Message, MessagePurpose
+from message import Message, MessagePurpose, TextData
 from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
 
 
@@ -145,7 +145,7 @@ class Database:
             messages.append(Message(
                 MessagePurpose(mes_purpose),
                 sender_username,
-                content,
+                TextData(content),
                 chat_name=chat_name,
                 is_encrypted=True,
             ))

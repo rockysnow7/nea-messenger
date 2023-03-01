@@ -385,7 +385,7 @@ class Server(Node):
             messages = self.__db.get_chat_messages(
                 request["chatName"],
                 request["numMessages"],
-            )
+           )
             messages = [bytes(message) for message in messages]
             messages = json.dumps(messages)
 
