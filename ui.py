@@ -464,11 +464,15 @@ class UI:
                 else:
                     self.__print_with_delay("\nYou already have a chat with that name!\n")
 
-    def __format_messages(self, messages: list[Message]) -> list[str]:
+    def __format_messages(
+        self,
+        messages: list[Message],
+        chat_data: dict[str, any],
+    ) -> list[str]:
         cols, rows = os.get_terminal_size(0)
         lines = []
         for message in messages:
-            message_lines = [f"[{message.sender}]{message.content.value}"]
+            message_lines = [f"[{chat_data['nicknames'][message.sender]}] {message.content.value}"]
             if len(message_lines[0]) > cols:
                 message_lines.append(message_lines[0][cols:])
                 message_lines[0] = message_lines[0][:cols]
@@ -537,7 +541,7 @@ class UI:
 
             chat_data = self.__get_chat_data(chat_name)
             messages = self.__get_chat_messages(chat_name, 10)
-            for line in self.__format_messages(messages):
+            for line in self.__format_messages(messages, chat_data):
                 self.__print(line)
 
             self.__print("\n1) go back")
@@ -550,12 +554,18 @@ class UI:
                 break
 
             if option == 2:
-                ...
+                message = self.__input("Message (leave blank to cancel): ")
+                self.client.send_message(Message(
+                    MessagePurpose.MESSAGE,
+                    encoding.encode_ip_addr(self.client.ip_addr),
+                    TextData(message),
+                    chat_name=chat_name,
+                ))
 
             elif option == 3:
                 continue
 
-            if option == 4:
+            elif option == 4:
                 self.__run_chat_settings(chat_name, chat_data)
 
             else:

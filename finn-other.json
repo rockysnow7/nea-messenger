@@ -1,0 +1,19 @@
+{
+    "chatType": 0,
+    "pubKey": [
+        11021,
+        181
+    ],
+    "members": [
+        "finn",
+        "other"
+    ],
+    "admins": [
+        "finn",
+        "other"
+    ],
+    "nicknames": {
+        "finn": "finn",
+        "other": "a"
+    }
+}

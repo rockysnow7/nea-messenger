@@ -249,7 +249,9 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
+        print(f"{chat_name=}")
         chat_name = self.__get_chat_history_table_name(chat_name)
+        print(f"{chat_name=}")
         c.execute(
             f"""
             CREATE TABLE {chat_name}(
@@ -270,12 +272,19 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
+        print(f"{message.chat_name=}")
+        chat_name = self.__get_chat_history_table_name(message.chat_name)
+        print(f"{chat_name=}")
+        mes_purpose = message.mes_purpose.value
+        sender_username = self.get_username_from_ip_addr(message.sender)
+        content = message.content.value
+
         c.execute(
             f"""
-            INSERT INTO {message.chat_name} (mes_purpose, sender_username, content)
+            INSERT INTO {chat_name} (mes_purpose, sender_username, content)
             VALUES (?, ?, ?)
             """,
-            (int(message.mes_purpose), message.sender, message.content),
+            (mes_purpose, sender_username, content),
         )
         conn.commit()
 
@@ -307,8 +316,8 @@ class Database:
         chat_data = self.get_chat_data(chat_name)
         chat_data["nicknames"][username] = nickname
 
-        with open(f"{chat_name}.json", "w") as f:
-            f.write(json.dumps(data, indent=4))
+        with open(f"chats/{chat_name}.json", "w") as f:
+            f.write(json.dumps(chat_data, indent=4))
 
     def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")

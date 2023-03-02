@@ -70,13 +70,16 @@ class Client(Node):
         self.__diffie_hellman_keys = {}
         self.ui_data = []
 
-    def send_message(self, mes: Message, encrypt: bool = False) -> None:
+    def send_message(self, mes: Message) -> None:
         """
         Sends `mes` to the server to be handled.
         """
 
-        if encrypt:
-            mes = rsa.encrypt(mes)
+        if mes.chat_name:
+            with open(f"user-chats/{mes.chat_name}.json", "r") as f:
+                priv_key = json.load(f)
+            priv_key = tuple(priv_key["privKey"])
+            mes = rsa.encrypt(mes, priv_key)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
     def send_message_to_ip(self, mes: Message, ip_addr: str) -> None:
