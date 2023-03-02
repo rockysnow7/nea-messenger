@@ -386,7 +386,7 @@ class Server(Node):
             messages = self.__db.get_chat_messages(
                 request["chatName"],
                 request["numMessages"],
-           )
+            )
             messages = [bytes(message).decode("utf-8") for message in messages]
             messages = json.dumps(messages)
 
@@ -395,6 +395,15 @@ class Server(Node):
                 self.ip_addr,
                 CommandData(messages),
             ), encoding.decode_ip_addr(ip_addr))
+
+        # set a user's nickname in a chat
+        elif mes.mes_purpose == MessagePurpose.SET_NICKNAME:
+            data = json.loads(mes.content.value)
+            self.__db.set_nickname(
+                data["chatName"],
+                data["username"],
+                data["nickname"],
+            )
 
     def run(self) -> None:
         self.is_running = True

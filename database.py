@@ -236,6 +236,9 @@ class Database:
                   )
                   """)
 
+    def __get_chat_history_table_name(self, chat_name: str) -> str:
+        return "_" + encoding.hash_str(chat_name)
+
     def create_new_chat_history_table(self, chat_name: str) -> None:
         """
         Creates a new chat history for a new chat.
@@ -246,7 +249,7 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        chat_name = "_" + encoding.hash_str(chat_name)
+        chat_name = self.__get_chat_history_table_name(chat_name)
         c.execute(
             f"""
             CREATE TABLE {chat_name}(
@@ -294,6 +297,18 @@ class Database:
 
         with open(f"settings/{username}.json", "w+") as f:
             f.write(json.dumps(settings, indent=4))
+
+    def set_nickname(
+        self,
+        chat_name: str,
+        username: str,
+        nickname: str,
+    ) -> None:
+        chat_data = self.get_chat_data(chat_name)
+        chat_data["nicknames"][username] = nickname
+
+        with open(f"{chat_name}.json", "w") as f:
+            f.write(json.dumps(data, indent=4))
 
     def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")

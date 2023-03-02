@@ -464,6 +464,66 @@ class UI:
                 else:
                     self.__print_with_delay("\nYou already have a chat with that name!\n")
 
+    def __format_messages(self, messages: list[Message]) -> list[str]:
+        cols, rows = os.get_terminal_size(0)
+        lines = []
+        for message in messages:
+            message_lines = [f"[{message.sender}]{message.content.value}"]
+            if len(message_lines[0]) > cols:
+                message_lines.append(message_lines[0][cols:])
+                message_lines[0] = message_lines[0][:cols]
+            lines += message_lines
+
+        # leave 5 lines at bottom, also account for 2 already printed at top
+        NUM_CLEAR_LINES = 10
+        lines = lines[-rows:] + ["" for _ in range(rows - len(lines) - NUM_CLEAR_LINES - 2)]
+
+        return lines
+
+    def __run_chat_settings(
+        self,
+        chat_name: str,
+        chat_data: dict[str, any],
+    ) -> None:
+        """
+        Allows the user to edit a chat's settings.
+        """
+
+        self.__update_settings()
+
+        while True:
+            os.system("clear")
+            self.__print("CHAT SETTINGS\n")
+            self.__print("1) go back")
+            self.__print("2) edit someone's nickname")
+
+            option = int(self.__input("> "))
+            if option == 1:
+                break
+
+            if option == 2:
+                username = self.__input("Username: ")
+                if username in chat_data["members"]:
+                    nickname = self.__input("Nickname: ")
+                    if nickname not in chat_data["nicknames"].values():
+                        data = json.dumps({
+                            "chatName": chat_name,
+                            "username": username,
+                            "nickname": nickname,
+                        })
+                        self.client.send_message(Message(
+                            MessagePurpose.SET_NICKNAME,
+                            encoding.encode_ip_addr(self.client.ip_addr),
+                            CommandData(data),
+                        ))
+                    else:
+                        self.__print_with_delay("\nSomeone already has that name, please choose another one.\n")
+                else:
+                    self.__print_with_delay("\nThat user isn't in this chat!\n")
+
+            else:
+                self.__print_with_delay("\nPlease enter a valid option.\n")
+
     def __run_chat(self, chat_name: str) -> None:
         """
         Allows the user to interact with a chat.
@@ -471,14 +531,35 @@ class UI:
 
         self.__update_settings()
 
-        os.system("clear")
-        self.__print(f"{chat_name}\n")
+        while True:
+            os.system("clear")
+            self.__print(f"{chat_name}\n")
 
-        chat_data = self.__get_chat_data(chat_name)
-        messages = self.__get_chat_messages(chat_name, 10)
+            chat_data = self.__get_chat_data(chat_name)
+            messages = self.__get_chat_messages(chat_name, 10)
+            for line in self.__format_messages(messages):
+                self.__print(line)
 
-        print(messages)
-        input()
+            self.__print("\n1) go back")
+            self.__print("2) send message")
+            self.__print("3) refresh")
+            self.__print("4) edit chat settings")
+
+            option = int(self.__input("> "))
+            if option == 1:
+                break
+
+            if option == 2:
+                ...
+
+            elif option == 3:
+                continue
+
+            if option == 4:
+                self.__run_chat_settings(chat_name, chat_data)
+
+            else:
+                self.__print_with_delay("\nPlease enter a valid option.\n")
 
     def __run_main_menu(self) -> None:
         """
