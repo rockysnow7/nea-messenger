@@ -185,7 +185,10 @@ class Client(Node):
         elif mes.mes_purpose == MessagePurpose.CREATE_USER_DONE:
             self.ui_data.append(UIData(UIDataTopic.CREATE_USER, True))
 
-        elif mes.mes_purpose == MessagePurpose.CREATE_USER_USERNAME_TAKEN:
+        elif mes.mes_purpose in {
+            MessagePurpose.CREATE_USER_USERNAME_TAKEN,
+            MessagePurpose.CREATE_USER_IP_TAKEN,
+        }:
             self.ui_data.append(UIData(UIDataTopic.CREATE_USER, False))
 
         elif mes.mes_purpose == MessagePurpose.TEST_LOGIN_SUCCESS:
@@ -267,12 +270,19 @@ class Server(Node):
             password_hash = mes.content.value[database.USERNAME_MAX_LEN:database.USERNAME_MAX_LEN + 64]
 
             if username not in self.__db.get_all_usernames():
-                self.__db.create_new_user(username, ip_addr, password_hash)
-                self.__send_message(Message(
-                    MessagePurpose.CREATE_USER_DONE,
-                    self.ip_addr,
-                    Data(),
-                ), encoding.decode_ip_addr(ip_addr))
+                if ip_addr not in self.__db.get_all_ip_addresses():
+                    self.__db.create_new_user(username, ip_addr, password_hash)
+                    self.__send_message(Message(
+                        MessagePurpose.CREATE_USER_DONE,
+                        self.ip_addr,
+                        Data(),
+                    ), encoding.decode_ip_addr(ip_addr))
+                else:
+                    self.__send_message(Message(
+                        MessagePurpose.CREATE_USER_IP_TAKEN,
+                        self.ip_addr,
+                        Data(),
+                    ), encoding.decode_ip_addr(ip_addr))
             else:
                 self.__send_message(Message(
                     MessagePurpose.CREATE_USER_USERNAME_TAKEN,

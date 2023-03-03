@@ -41,9 +41,9 @@ class UI:
     def __print(self, message: str) -> None:
         print(COLORS[self.settings["color"]] + message + Color.RESET)
 
-    def __print_with_delay(self, message: str) -> None:
+    def __print_with_delay(self, message: str, delay: float = 0.5) -> None:
         self.__print(message)
-        time.sleep(0.5)
+        time.sleep(delay)
 
     def __input(self, message: str) -> str:
         response = input(COLORS[self.settings["color"]] + message)
@@ -632,7 +632,7 @@ class UI:
                     self.__print_with_delay("\nCreated user!\n")
                     self.__run_main_menu()
                 else:
-                    self.__print_with_delay("\nUsername already taken, please choose a different username.\n")
+                    self.__print_with_delay("\nUsername already taken, please choose a different username. If this issue persists, you may already have an account under this IP address, and will need to log into that account.\n", 1)
 
             elif option == 3:
                 if self.__log_in():

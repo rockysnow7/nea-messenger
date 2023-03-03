@@ -52,6 +52,15 @@ class Database:
 
         return [username[0] for username in usernames]
 
+    def get_all_ip_addresses(self) -> list[str]:
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        c.execute("SELECT ip_addr FROM users")
+        ip_addrs = c.fetchall()
+
+        return [ip_addr[0] for ip_addr in ip_addrs]
+
     def get_username_from_ip_addr(self, ip_addr: str) -> str:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
@@ -249,15 +258,14 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        print(f"{chat_name=}")
         chat_name = self.__get_chat_history_table_name(chat_name)
-        print(f"{chat_name=}")
         c.execute(
             f"""
             CREATE TABLE {chat_name}(
             mes_purpose INT,
             sender_username VARCHAR({USERNAME_MAX_LEN}),
-            content VARCHAR({MESSAGE_CONTENT_MAX_LEN})
+            content VARCHAR({MESSAGE_CONTENT_MAX_LEN}),
+            likes VARCHAR(1000)
             )
             """,
         )
@@ -272,19 +280,18 @@ class Database:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        print(f"{message.chat_name=}")
         chat_name = self.__get_chat_history_table_name(message.chat_name)
-        print(f"{chat_name=}")
         mes_purpose = message.mes_purpose.value
         sender_username = self.get_username_from_ip_addr(message.sender)
         content = message.content.value
+        likes = ",".join(message.likes)
 
         c.execute(
             f"""
-            INSERT INTO {chat_name} (mes_purpose, sender_username, content)
-            VALUES (?, ?, ?)
+            INSERT INTO {chat_name} (mes_purpose, sender_username, content, likes)
+            VALUES (?, ?, ?, ?)
             """,
-            (mes_purpose, sender_username, content),
+            (mes_purpose, sender_username, content, likes),
         )
         conn.commit()
 

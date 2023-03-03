@@ -77,19 +77,20 @@ class MessagePurpose(Enum):
     EXCHANGE                    = 2
     CREATE_USER                 = 3
     CREATE_USER_USERNAME_TAKEN  = 4
-    CREATE_USER_DONE            = 5
-    CREATE_CHAT                 = 6
-    TEST_LOGIN                  = 7
-    TEST_LOGIN_SUCCESS          = 8
-    TEST_LOGIN_FAILURE          = 9
-    GET_USER_CHAT_NAMES         = 10
-    SET_COLOR                   = 11
-    GET_SETTINGS                = 12
-    GET_ALL_USERNAMES           = 13
-    GET_IP_ADDR                 = 14
-    GET_CHAT_DATA               = 15
-    GET_CHAT_MESSAGES           = 16
-    SET_NICKNAME                = 17
+    CREATE_USER_IP_TAKEN        = 5
+    CREATE_USER_DONE            = 6
+    CREATE_CHAT                 = 7
+    TEST_LOGIN                  = 8
+    TEST_LOGIN_SUCCESS          = 9
+    TEST_LOGIN_FAILURE          = 10
+    GET_USER_CHAT_NAMES         = 11
+    SET_COLOR                   = 12
+    GET_SETTINGS                = 13
+    GET_ALL_USERNAMES           = 14
+    GET_IP_ADDR                 = 15
+    GET_CHAT_DATA               = 16
+    GET_CHAT_MESSAGES           = 17
+    SET_NICKNAME                = 18
 
 class Message:
     def __init__(
@@ -100,6 +101,7 @@ class Message:
         *,
         sender_username: str = "",
         chat_name: str = "",
+        likes: list[str] = [],
         is_encrypted: bool = False,
         timestamp: float = time.time(),
     ):
@@ -107,12 +109,13 @@ class Message:
         self.sender = sender
         self.sender_username = sender_username
         self.chat_name = chat_name
+        self.likes = likes
         self.mes_purpose = mes_purpose
         self.content = content
         self.timestamp = timestamp
 
     def __repr__(self) -> str:
-        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.sender_username}, {self.chat_name}, {self.content}, {self.timestamp})"
+        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.sender_username}, {self.chat_name}, {self.likes}, {self.content}, {self.timestamp})"
 
     def __as_JSON_str(self) -> str:
         self_dict = deepcopy(self.__dict__)
@@ -141,6 +144,7 @@ class Message:
             d["sender"],
             d["content"],
             chat_name=d["chat_name"],
+            likes=d["likes"],
             is_encrypted=d["is_encrypted"],
             timestamp=d["timestamp"],
         )
