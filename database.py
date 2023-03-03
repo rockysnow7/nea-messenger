@@ -150,12 +150,13 @@ class Database:
         results = c.fetchall()
 
         messages = []
-        for (mes_purpose, sender_username, content) in results:
+        for (mes_purpose, sender_username, content, likes) in results:
             messages.append(Message(
                 MessagePurpose(mes_purpose),
                 sender_username,
                 TextData(content),
                 chat_name=chat_name,
+                likes=likes.split(","),
                 is_encrypted=True,
             ))
 
