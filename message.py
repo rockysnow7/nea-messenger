@@ -101,7 +101,7 @@ class Message:
         *,
         sender_username: str = "",
         chat_name: str = "",
-        likes: list[str] = [],
+        views: list[str] = [],
         is_encrypted: bool = False,
         timestamp: float = time.time(),
     ):
@@ -109,13 +109,13 @@ class Message:
         self.sender = sender
         self.sender_username = sender_username
         self.chat_name = chat_name
-        self.likes = likes
+        self.views = views
         self.mes_purpose = mes_purpose
         self.content = content
         self.timestamp = timestamp
 
     def __repr__(self) -> str:
-        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.sender_username}, {self.chat_name}, {self.likes}, {self.content}, {self.timestamp})"
+        return f"Message({self.is_encrypted}, {self.mes_purpose}, {self.sender}, {self.sender_username}, {self.chat_name}, {self.views}, {self.content}, {self.timestamp})"
 
     def __as_JSON_str(self) -> str:
         self_dict = deepcopy(self.__dict__)
@@ -144,7 +144,7 @@ class Message:
             d["sender"],
             d["content"],
             chat_name=d["chat_name"],
-            likes=d["likes"],
+            views=d["views"],
             is_encrypted=d["is_encrypted"],
             timestamp=d["timestamp"],
         )

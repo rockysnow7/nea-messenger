@@ -150,13 +150,13 @@ class Database:
         results = c.fetchall()
 
         messages = []
-        for (mes_purpose, sender_username, content, likes) in results:
+        for (mes_purpose, sender_username, content, views) in results:
             messages.append(Message(
                 MessagePurpose(mes_purpose),
                 sender_username,
                 TextData(content),
                 chat_name=chat_name,
-                likes=likes.split(","),
+                views=views.split(","),
                 is_encrypted=True,
             ))
 
@@ -266,7 +266,7 @@ class Database:
             mes_purpose INT,
             sender_username VARCHAR({USERNAME_MAX_LEN}),
             content VARCHAR({MESSAGE_CONTENT_MAX_LEN}),
-            likes VARCHAR(1000)
+            views VARCHAR(1000)
             )
             """,
         )
@@ -285,16 +285,41 @@ class Database:
         mes_purpose = message.mes_purpose.value
         sender_username = self.get_username_from_ip_addr(message.sender)
         content = message.content.value
-        likes = ",".join(message.likes)
+        views = ",".join(message.views)
 
         c.execute(
             f"""
-            INSERT INTO {chat_name} (mes_purpose, sender_username, content, likes)
+            INSERT INTO {chat_name} (mes_purpose, sender_username, content, views)
             VALUES (?, ?, ?, ?)
             """,
-            (mes_purpose, sender_username, content, likes),
+            (mes_purpose, sender_username, content, views),
         )
         conn.commit()
+
+    def view_messages(self, chat_name: str, username: str) -> None:
+        return
+        conn = sqlite3.connect("server-db.db")
+        c = conn.cursor()
+
+        chat_name = self.__get_chat_history_table_name(message.chat_name)
+
+        #c.execute(f"SELECT MAX(rowid) FROM {chat_name}")
+        #max_id = c.fetchall()[0][0]
+        #if max_id is None:
+        #    return
+
+        c.execute(f"SELECT rowid, views FROM {chat_name}")
+        results = c.fetchall()
+        #if results[-1]
+
+        min_rowid = None
+        for i in range(len(results)):
+            min_rowid, views = results[i]
+            views = views.split(",")
+            if username not in views:
+                break
+
+        #if 
 
     def get_user_settings(self, username: str) -> dict[str, any]:
         with open(f"settings/{username}.json", "r") as f:
