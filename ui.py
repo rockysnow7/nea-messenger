@@ -560,7 +560,7 @@ class UI:
                     encoding.encode_ip_addr(self.client.ip_addr),
                     TextData(message),
                     chat_name=chat_name,
-                ))
+                ), tuple(chat_data["pubKey"]))
 
             elif option == 3:
                 continue

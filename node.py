@@ -70,7 +70,7 @@ class Client(Node):
         self.__diffie_hellman_keys = {}
         self.ui_data = []
 
-    def send_message(self, mes: Message) -> None:
+    def send_message(self, mes: Message, pub_key: tuple[int, int] | None = None) -> None:
         """
         Sends `mes` to the server to be handled.
         """
@@ -78,8 +78,7 @@ class Client(Node):
         if mes.chat_name:
             with open(f"user-chats/{mes.chat_name}.json", "r") as f:
                 priv_key = json.load(f)
-            priv_key = tuple(priv_key["privKey"])
-            mes = rsa.encrypt(mes, priv_key)
+            mes = rsa.encrypt(mes, pub_key)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
     def send_message_to_ip(self, mes: Message, ip_addr: str) -> None:
@@ -114,17 +113,6 @@ class Client(Node):
             encoding.encode_ip_addr(self.ip_addr),
             CommandData(keys),
         ), encoding.decode_ip_addr(ip_addr))
-
-    """
-    0. Alice generates p, g, a, A. Sends p, g, A to Bob (1).
-    1. Bob generates b, B, s. Sends B to Alice (2).
-    2. Alice generates s.
-
-    E.g.
-    0. Alice: p=23, g=5, a=7, A=17, Alice -> Bob (p, g, A)
-    1. Bob: b=9, B=11, s=7, Bob -> Alice (B,)
-    2. Alice: s=7
-    """
 
     def __handle_key_exchange(self, mes: Message) -> None:
         """
