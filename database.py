@@ -286,6 +286,7 @@ class Database:
         sender_username = self.get_username_from_ip_addr(message.sender)
         content = message.content.value
         views = ",".join(message.views)
+        print(f"{views=}")
 
         c.execute(
             f"""
@@ -297,29 +298,45 @@ class Database:
         conn.commit()
 
     def view_messages(self, chat_name: str, username: str) -> None:
-        return
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
 
-        chat_name = self.__get_chat_history_table_name(message.chat_name)
-
-        #c.execute(f"SELECT MAX(rowid) FROM {chat_name}")
-        #max_id = c.fetchall()[0][0]
-        #if max_id is None:
-        #    return
+        chat_name = self.__get_chat_history_table_name(chat_name)
 
         c.execute(f"SELECT rowid, views FROM {chat_name}")
         results = c.fetchall()
-        #if results[-1]
+        print(f"{results=}")
+        if not results:
+            return
 
+        max_rowid = results[-1][0]
         min_rowid = None
         for i in range(len(results)):
-            min_rowid, views = results[i]
-            views = views.split(",")
-            if username not in views:
+            rowid, views = results[i]
+            views_list = views.split(",")
+            if username not in views_list:
+                min_rowid = rowid
                 break
 
-        #if 
+        if min_rowid is None:
+            return
+
+        for i in range(min_rowid, max_rowid + 1):
+            print(f"{i=}")
+            views_list = results[i-1][1].split(",")
+            views_list = [name for name in views_list if name]
+            views_list.append(username)
+            views = ",".join(views_list)
+            print(f"{views=}")
+            c.execute(
+                f"""
+                UPDATE {chat_name}
+                SET views = ?
+                WHERE rowid = ?
+                """,
+                (views, i),
+            )
+            conn.commit()
 
     def get_user_settings(self, username: str) -> dict[str, any]:
         with open(f"settings/{username}.json", "r") as f:

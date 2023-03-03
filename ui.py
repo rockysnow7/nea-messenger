@@ -472,7 +472,13 @@ class UI:
         cols, rows = os.get_terminal_size(0)
         lines = []
         for message in messages:
-            message_lines = [f"[{chat_data['nicknames'][message.sender]}] {message.content.value}"]
+            message_lines = [
+                f"[{chat_data['nicknames'][message.sender]}] {message.content.value}"
+            ]
+            if message.views:
+                views = ", ".join(message.views)
+                message_lines[0] += f"\t[seen by {views}]"
+
             if len(message_lines[0]) > cols:
                 message_lines.append(message_lines[0][cols:])
                 message_lines[0] = message_lines[0][:cols]
@@ -554,13 +560,14 @@ class UI:
                 break
 
             if option == 2:
-                message = self.__input("Message (leave blank to cancel): ")
-                self.client.send_message(Message(
-                    MessagePurpose.MESSAGE,
-                    encoding.encode_ip_addr(self.client.ip_addr),
-                    TextData(message),
-                    chat_name=chat_name,
-                ), tuple(chat_data["pubKey"]))
+                message = self.__input("Message (leave blank to cancel): ").strip()
+                if message:
+                    self.client.send_message(Message(
+                        MessagePurpose.MESSAGE,
+                        encoding.encode_ip_addr(self.client.ip_addr),
+                        TextData(message),
+                        chat_name=chat_name,
+                    ), tuple(chat_data["pubKey"]))
 
             elif option == 3:
                 continue

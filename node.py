@@ -391,15 +391,16 @@ class Server(Node):
             messages = [bytes(message).decode("utf-8") for message in messages]
             messages = json.dumps(messages)
 
+            self.__db.view_messages(
+                request["chatName"],
+                self.__db.get_username_from_ip_addr(ip_addr),
+            )
+
             self.__send_message(Message(
                 MessagePurpose.GET_CHAT_MESSAGES,
                 self.ip_addr,
                 CommandData(messages),
             ), encoding.decode_ip_addr(ip_addr))
-            self.__db.view_messages(
-                request["chatName"],
-                self.__db.get_username_from_ip_addr(ip_addr),
-            )
 
         # set a user's nickname in a chat
         elif mes.mes_purpose == MessagePurpose.SET_NICKNAME:

@@ -33,6 +33,7 @@ def encrypt(mes: Message, pub_key: tuple[int, int]) -> Message:
         mes.sender,
         type(mes.content)([pow(ord(m), e, n) for m in mes.content]),
         chat_name=mes.chat_name,
+        views=mes.views,
         is_encrypted=True,
     )
 
@@ -48,4 +49,5 @@ def decrypt(mes: Message, priv_key: tuple[int, int]) -> Message:
         mes.sender,
         type(mes.content)([pow(ord(m), d, n) for m in mes.content]),
         chat_name=mes.chat_name,
+        views=mes.views,
     )
