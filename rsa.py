@@ -27,11 +27,16 @@ def encrypt(mes: Message, pub_key: tuple[int, int]) -> Message:
     """
 
     n, e = pub_key
+    print(f"{n=}, {e=}")
+    plaintext = [ord(m) for m in mes.content]
+    print(mes_ords)
+    ciphertext = [pow(m, e, n) for m in plaintext]
+    print(ciphertext)
 
     return Message(
         mes.mes_purpose,
         mes.sender,
-        type(mes.content)([pow(ord(m), e, n) for m in mes.content]),
+        type(mes.content)(ciphertext),
         chat_name=mes.chat_name,
         views=mes.views,
         is_encrypted=True,
@@ -43,11 +48,16 @@ def decrypt(mes: Message, priv_key: tuple[int, int]) -> Message:
     """
 
     n, d = priv_key
+    print(f"{n=}, {d=}")
+    ciphertext = [ord(m) for m in mes.content]
+    print(mes_ords)
+    plaintext = [pow(m, e, n) for m in ciphertext]
+    print(plaintext)
 
     return Message(
         mes.mes_purpose,
         mes.sender,
-        type(mes.content)([pow(ord(m), d, n) for m in mes.content]),
+        type(mes.content)(plaintext),
         chat_name=mes.chat_name,
         views=mes.views,
     )

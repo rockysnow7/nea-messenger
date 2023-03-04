@@ -80,8 +80,6 @@ class Client(Node):
             return
 
         if mes.chat_name:
-            with open(f"user-chats/{mes.chat_name}.json", "r") as f:
-                priv_key = json.load(f)
             mes = rsa.encrypt(mes, pub_key)
         self._send_bytes_to_ip(SERVER_IP_ADDR, bytes(mes), False)
 
