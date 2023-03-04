@@ -75,6 +75,9 @@ class Client(Node):
         Sends `mes` to the server to be handled.
         """
 
+        if not os.path.exists(f"user-chats/{chat_name}.json"):
+            return
+
         if mes.chat_name:
             with open(f"user-chats/{mes.chat_name}.json", "r") as f:
                 priv_key = json.load(f)

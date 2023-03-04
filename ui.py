@@ -212,6 +212,9 @@ class UI:
                 del self.client.ui_data[i]
                 break
 
+        if not os.path.exists(f"user-chats/{chat_name}.json"):
+            return []
+
         with open(f"user-chats/{chat_name}.json", "r") as f:
             priv_key = json.load(f)
         priv_key = tuple(priv_key["privKey"])
