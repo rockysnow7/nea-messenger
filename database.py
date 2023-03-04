@@ -395,6 +395,7 @@ class Database:
     def remove_user_from_chat(self, chat_name: str, username: str) -> None:
         chat_data = self.get_chat_data(chat_name)
         chat_data["members"].remove(username)
+        chat_data["admins"].remove(username)
         del chat_data["nicknames"][username]
 
         with open(f"chats/{chat_name}.json", "w") as f:
