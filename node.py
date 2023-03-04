@@ -75,7 +75,8 @@ class Client(Node):
         Sends `mes` to the server to be handled.
         """
 
-        if not os.path.exists(f"user-chats/{chat_name}.json"):
+        if mes.mes_purpose == MessagePurpose.MESSAGE \
+        and not os.path.exists(f"user-chats/{chat_name}.json"):
             return
 
         if mes.chat_name:
