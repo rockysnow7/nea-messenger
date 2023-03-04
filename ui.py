@@ -625,7 +625,8 @@ class UI:
             self.__print("CHAT SETTINGS\n")
             self.__print("1) go back")
             self.__print("2) edit someone's nickname")
-            if self.username in chat_data["admins"]:
+            if ChatType(chat_data["chatType"]) == ChatType.GROUP \
+            and self.username in chat_data["admins"]:
                 self.__print("3) admin settings")
 
             option = int(self.__input("> "))
@@ -653,7 +654,9 @@ class UI:
                 else:
                     self.__print_with_delay("\nThat user isn't in this chat!\n")
 
-            elif option == 3 and self.username in chat_data["admins"]:
+            elif option == 3 \
+            and ChatType(chat_data["chatType"]) == ChatType.GROUP \
+            and self.username in chat_data["admins"]:
                 self.__run_chat_admin_settings(chat_name)
 
             else:
