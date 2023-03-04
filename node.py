@@ -76,7 +76,7 @@ class Client(Node):
         """
 
         if mes.mes_purpose == MessagePurpose.MESSAGE \
-        and not os.path.exists(f"user-chats/{chat_name}.json"):
+        and not os.path.exists(f"user-chats/{mes.chat_name}.json"):
             return
 
         if mes.chat_name:
