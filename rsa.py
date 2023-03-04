@@ -27,11 +27,11 @@ def encrypt(mes: Message, pub_key: tuple[int, int]) -> Message:
     """
 
     n, e = pub_key
-    print(f"{n=}, {e=}")
+    print(f"[rsa] {n=}, {e=}")
     plaintext = [ord(m) for m in mes.content]
-    print(mes_ords)
+    print(f"[rsa] {plaintext=}")
     ciphertext = [pow(m, e, n) for m in plaintext]
-    print(ciphertext)
+    print(f"[rsa] {ciphertext=}")
 
     return Message(
         mes.mes_purpose,
@@ -48,11 +48,11 @@ def decrypt(mes: Message, priv_key: tuple[int, int]) -> Message:
     """
 
     n, d = priv_key
-    print(f"{n=}, {d=}")
+    print(f"[rsa] {n=}, {d=}")
     ciphertext = [ord(m) for m in mes.content]
-    print(mes_ords)
+    print(f"[rsa] {ciphertext=}")
     plaintext = [pow(m, e, n) for m in ciphertext]
-    print(plaintext)
+    print(f"[rsa] {plaintext=}")
 
     return Message(
         mes.mes_purpose,
