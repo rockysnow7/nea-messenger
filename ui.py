@@ -238,17 +238,17 @@ class UI:
             self.__print("1) go back")
             self.__print("2) change interface color")
 
-            option = int(self.__input("> "))
-            if option == 1:
+            option = self.__input("> ")
+            if option == "1":
                 break
 
-            if option == 2:
+            if option == "2":
                 while True:
                     self.__print("1) white (default)")
                     self.__print("2) blue")
 
-                    color_option = int(self.__input("> "))
-                    if color_option == 1:
+                    color_option = self.__input("> ")
+                    if color_option == "1":
                         self.client.send_message(Message(
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
@@ -257,7 +257,7 @@ class UI:
                         self.settings["color"] = "white"
                         break
 
-                    elif color_option == 2:
+                    elif color_option == "2":
                         self.client.send_message(Message(
                             MessagePurpose.SET_COLOR,
                             encoding.encode_ip_addr(self.client.ip_addr),
@@ -351,11 +351,11 @@ class UI:
             self.__print("2) single chat")
             self.__print("3) group chat")
 
-            type_option = int(self.__input("> "))
-            if type_option == 1:
+            type_option = self.__input("> ")
+            if type_option == "1":
                 break
 
-            if type_option == 2:
+            if type_option == "2":
                 other_username = self.__input("\nOther person's username: ")
                 all_usernames = self.__get_all_usernames()
                 if other_username in all_usernames: # check if other user exists
@@ -403,7 +403,7 @@ class UI:
                 else:
                     self.__print_with_delay("\nThat user does not exist.")
 
-            elif type_option == 3:
+            elif type_option == "3":
                 chat_name = self.__input("\nChat name: ")
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
@@ -514,11 +514,11 @@ class UI:
             self.__print("3) add user to chat")
             self.__print("4) remove user from chat")
 
-            option = int(self.__input("> "))
-            if option == 1:
+            option = self.__input("> ")
+            if option == "1":
                 break
 
-            if option == 2:
+            if option == "2":
                 username = self.__input("Username: ")
                 if username in chat_data["members"]:
                     level = self.__input("Level (regular or admin): ")
@@ -558,7 +558,7 @@ class UI:
                 else:
                     self.__print_with_delay("\nThat user is not in this chat.\n")
 
-            elif option == 3:
+            elif option == "3":
                 username = self.__input("Username: ")
                 if username in self.__get_all_usernames():
                     if username not in chat_data["members"]:
@@ -586,7 +586,7 @@ class UI:
                 else:
                     self.__print_with_delay(f"\nThat user does not exist!\n")
 
-            elif option == 4:
+            elif option == "4":
                 username = self.__input("Username: ")
                 if username in self.__get_all_usernames():
                     if username in chat_data["members"]:
@@ -629,11 +629,11 @@ class UI:
             and self.username in chat_data["admins"]:
                 self.__print("3) admin settings")
 
-            option = int(self.__input("> "))
-            if option == 1:
+            option = self.__input("> ")
+            if option == "1":
                 break
 
-            if option == 2:
+            if option == "2":
                 username = self.__input("Username: ")
                 if username in chat_data["members"]:
                     nickname = self.__input("Nickname: ")
@@ -654,7 +654,7 @@ class UI:
                 else:
                     self.__print_with_delay("\nThat user isn't in this chat!\n")
 
-            elif option == 3 \
+            elif option == "3" \
             and ChatType(chat_data["chatType"]) == ChatType.GROUP \
             and self.username in chat_data["admins"]:
                 self.__run_chat_admin_settings(chat_name)
@@ -683,11 +683,11 @@ class UI:
             self.__print("3) refresh")
             self.__print("4) edit chat settings")
 
-            option = int(self.__input("> "))
-            if option == 1:
+            option = self.__input("> ")
+            if option == "1":
                 break
 
-            if option == 2:
+            if option == "2":
                 message = self.__input("Message (leave blank to cancel): ").strip()
                 if message:
                     self.client.send_message(Message(
@@ -697,10 +697,10 @@ class UI:
                         chat_name=chat_name,
                     ), tuple(chat_data["pubKey"]))
 
-            elif option == 3:
+            elif option == "3":
                 continue
 
-            elif option == 4:
+            elif option == "4":
                 self.__run_chat_settings(chat_name)
 
             else:
@@ -724,19 +724,19 @@ class UI:
             for i in range(len(user_chats)):
                 self.__print(f"{i+4}) view {user_chats[i]}")
 
-            option = int(self.__input("> "))
+            option = self.__input("> ")
 
-            if option == 1:
+            if option == "1":
                 break
 
-            if option == 2:
+            if option == "2":
                 self.__run_general_settings()
 
-            elif option == 3:
+            elif option == "3":
                 self.__run_create_chat()
 
-            elif option - 4 < len(user_chats):
-                self.__run_chat(user_chats[option - 4])
+            elif option.isdigit() and int(option) - 4 < len(user_chats):
+                self.__run_chat(user_chats[int(option) - 4])
 
             else:
                 self.__print_with_delay("\nPlease enter a valid option.\n")
@@ -755,13 +755,13 @@ class UI:
             self.__print("1) exit")
             self.__print("2) sign up")
             self.__print("3) log in")
-            option = int(self.__input("> "))
+            option = self.__input("> ")
 
-            if option == 1:
+            if option == "1":
                 self.client.is_running = False
                 break
 
-            elif option == 2:
+            elif option == "2":
                 if self.__create_user():
                     self.is_logged_in = True
                     self.__print_with_delay("\nCreated user!\n")
@@ -769,7 +769,7 @@ class UI:
                 else:
                     self.__print_with_delay("\nUsername already taken, please choose a different username. If this issue persists, you may already have an account under this IP address, and will need to log into that account.\n", 1)
 
-            elif option == 3:
+            elif option == "3":
                 if self.__log_in():
                     self.is_logged_in = True
                     self.__print_with_delay("\nLogged in!\n")
