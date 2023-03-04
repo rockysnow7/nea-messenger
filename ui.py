@@ -547,6 +547,7 @@ class UI:
                                 encoding.encode_ip_addr(self.client.ip_addr),
                                 CommandData(data),
                             ))
+                            self.__print_with_delay("\nChanged privilege.\n")
 
                     else:
                         self.__print_with_delay("\nPlease choose a valid option.\n")
@@ -642,6 +643,7 @@ class UI:
                             encoding.encode_ip_addr(self.client.ip_addr),
                             CommandData(data),
                         ))
+                        self.__print_with_delay("\nChanged nickname.\n")
                     else:
                         self.__print_with_delay("\nSomeone already has that name, please choose another one.\n")
                 else:
