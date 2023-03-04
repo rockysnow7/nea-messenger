@@ -91,6 +91,9 @@ class MessagePurpose(Enum):
     GET_CHAT_DATA               = 16
     GET_CHAT_MESSAGES           = 17
     SET_NICKNAME                = 18
+    SET_PRIVILEGE               = 19
+    ADD_USER_TO_CHAT            = 20
+    REMOVE_USER_FROM_CHAT       = 21
 
 class Message:
     def __init__(

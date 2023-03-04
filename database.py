@@ -369,6 +369,29 @@ class Database:
         with open(f"chats/{chat_name}.json", "w") as f:
             f.write(json.dumps(chat_data, indent=4))
 
+    def set_privilege(
+        self,
+        chat_name: str,
+        username: str,
+        level: str,
+    ) -> None:
+        chat_data = self.get_chat_data(chat_name)
+        if level == "admin" and username not in chat_data["admins"]:
+            chat_data["admins"].append(username)
+        elif level == "regular" and username in chat_data["admins"]:
+            chat_data["admins"].remove(username)
+
+        with open(f"chats/{chat_name}.json", "w") as f:
+            f.write(json.dumps(chat_data, indent=4))
+
+    def add_user_to_chat(self, chat_name: str, username: str) -> None:
+        chat_data = self.get_chat_data(chat_name)
+        chat_data["members"].append(username)
+        chat_data["nicknames"][username] = username
+
+        with open(f"chats/{chat_name}.json", "w") as f:
+            f.write(json.dumps(chat_data, indent=4))
+
     def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()

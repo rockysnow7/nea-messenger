@@ -475,8 +475,9 @@ class UI:
             message_lines = [
                 f"[{chat_data['nicknames'][message.sender]}] {message.content.value}"
             ]
-            if message.views:
-                views = ", ".join(message.views)
+            views = [name for name in message.views if name]
+            if views:
+                views = ", ".join(views)
                 message_lines[0] += f"\t[seen by {views}]"
 
             if len(message_lines[0]) > cols:
@@ -489,6 +490,119 @@ class UI:
         lines = lines[-rows:] + ["" for _ in range(rows - len(lines) - NUM_CLEAR_LINES - 2)]
 
         return lines
+
+    def __run_chat_admin_settings(
+        self,
+        chat_name: str,
+        chat_data: dict[str, any],
+    ) -> None:
+        """
+        Allows the user to edit a chat's admin settings.
+        """
+
+        self.__update_settings()
+
+        while True:
+            os.system("clear")
+            self.__print("CHAT ADMIN SETTINGS\n")
+            self.__print("1) go back")
+            self.__print("2) set privilege level of another user")
+            self.__print("3) add user to chat")
+            self.__print("4) remove user from chat")
+
+            option = int(self.__input("> "))
+            if option == 1:
+                break
+
+            if option == 2:
+                username = self.__input("Username: ")
+                if username in chat_data["members"]:
+                    level = self.__input("Level (regular or admin): ")
+                    if level == "regular":
+                        if username in chat_data["admins"]:
+                            data = json.dumps({
+                                "chatName": chat_name,
+                                "username": username,
+                                "level": level,
+                            })
+                            self.client.send_message(Message(
+                                MessagePurpose.SET_PRIVILEGE,
+                                encoding.encode_ip_addr(self.client.ip_addr),
+                                CommandData(data),
+                            ))
+                        else:
+                            self.__print_with_delay(f"\n{username} is already a regular user.\n")
+
+                    elif level == "admin":
+                        if username in chat_data["admins"]:
+                            self.__print_with_delay(f"\n{username} is already an admin.\n")
+                        else:
+                            data = json.dumps({
+                                "chatName": chat_name,
+                                "username": username,
+                                "level": level,
+                            })
+                            self.client.send_message(Message(
+                                MessagePurpose.SET_PRIVILEGE,
+                                encoding.encode_ip_addr(self.client.ip_addr),
+                                CommandData(data),
+                            ))
+
+                    else:
+                        self.__print_with_delay("\nPlease choose a valid option.\n")
+                else:
+                    self.__print_with_delay("\nThat user is not in this chat.\n")
+
+            elif option == 3:
+                username = self.__input("Username: ")
+                if username in self.__get_all_usernames():
+                    if username not in chat_data["members"]:
+                        if self.__send_private_key(
+                            priv_key,
+                            username,
+                            chat_name,
+                        ):
+                            data = json.dumps({
+                                "chatName": chat_name,
+                                "username": username,
+                            })
+                            self.client.send_message(Message(
+                                MessagePurpose.ADD_USER_TO_CHAT,
+                                encoding.encode_ip_addr(self.client.ip_addr),
+                                CommandData(data),
+                            ))
+                            self.__print_with_delay(f"\nUser added.\n")
+                    else:
+                        self.__print_with_delay(f"\nThat user is already in this chat.\n")
+                else:
+                    self.__print_with_delay(f"\nThat user does not exist!\n")
+
+            elif option == 4:
+                username = self.__input("Username: ")
+                if username in self.__get_all_usernames():
+                    if username in chat_data["members"]:
+                        if self.__send_private_key(
+                            priv_key,
+                            username,
+                            chat_name,
+                        ):
+                            data = json.dumps({
+                                "chatName": chat_name,
+                                "username": username,
+                            })
+                            self.client.send_message(Message(
+                                MessagePurpose.REMOVE_USER_FROM_CHAT,
+                                encoding.encode_ip_addr(self.client.ip_addr),
+                                CommandData(data),
+                            ))
+                            self.__print_with_delay(f"\nUser removed.\n")
+                    else:
+                        self.__print_with_delay(f"\nThat user is not in this chat.\n")
+                else:
+                    self.__print_with_delay(f"\nThat user does not exist!\n")
+
+            else:
+                self.__print_with_delay("\nPlease choose a valid option.\n")
 
     def __run_chat_settings(
         self,
@@ -506,6 +620,8 @@ class UI:
             self.__print("CHAT SETTINGS\n")
             self.__print("1) go back")
             self.__print("2) edit someone's nickname")
+            if self.username in chat_data["admins"]:
+                self.__print("3) admin settings")
 
             option = int(self.__input("> "))
             if option == 1:
@@ -530,6 +646,9 @@ class UI:
                         self.__print_with_delay("\nSomeone already has that name, please choose another one.\n")
                 else:
                     self.__print_with_delay("\nThat user isn't in this chat!\n")
+
+            elif option == 3 and self.username in chat_data["admins"]:
+                self.__run_chat_admin_settings(chat_name, chat_data)
 
             else:
                 self.__print_with_delay("\nPlease enter a valid option.\n")

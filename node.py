@@ -411,6 +411,23 @@ class Server(Node):
                 data["nickname"],
             )
 
+        # set a user's privilege level in a chat
+        elif mes.mes_purpose == MessagePurpose.SET_PRIVILEGE:
+            data = json.loads(mes.content.value)
+            self.__db.set_privilege(
+                data["chatName"],
+                data["username"],
+                data["level"],
+            )
+
+        # add a user to a chat
+        elif mes.mes_purpose == MessagePurpose.ADD_USER_TO_CHAT:
+            data = json.loads(mes.content.value)
+            self.__db.add_user_to_chat(
+                data["chatName"],
+                data["username"],
+            )
+
     def run(self) -> None:
         self.is_running = True
         threading.Thread(
