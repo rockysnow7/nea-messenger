@@ -558,6 +558,10 @@ class UI:
                 username = self.__input("Username: ")
                 if username in self.__get_all_usernames():
                     if username not in chat_data["members"]:
+                        with open(f"user-chats/{chat_name}.json", "r") as f:
+                            priv_key = json.load(f)
+                        priv_key = tuple(priv_key["privKey"])
+
                         if self.__send_private_key(
                             priv_key,
                             username,
@@ -582,21 +586,16 @@ class UI:
                 username = self.__input("Username: ")
                 if username in self.__get_all_usernames():
                     if username in chat_data["members"]:
-                        if self.__send_private_key(
-                            priv_key,
-                            username,
-                            chat_name,
-                        ):
-                            data = json.dumps({
-                                "chatName": chat_name,
-                                "username": username,
-                            })
-                            self.client.send_message(Message(
-                                MessagePurpose.REMOVE_USER_FROM_CHAT,
-                                encoding.encode_ip_addr(self.client.ip_addr),
-                                CommandData(data),
-                            ))
-                            self.__print_with_delay(f"\nUser removed.\n")
+                        data = json.dumps({
+                            "chatName": chat_name,
+                            "username": username,
+                        })
+                        self.client.send_message(Message(
+                            MessagePurpose.REMOVE_USER_FROM_CHAT,
+                            encoding.encode_ip_addr(self.client.ip_addr),
+                            CommandData(data),
+                        ))
+                        self.__print_with_delay(f"\nUser removed.\n")
                     else:
                         self.__print_with_delay(f"\nThat user is not in this chat.\n")
                 else:

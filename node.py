@@ -221,6 +221,10 @@ class Client(Node):
             messages = [Message.from_bytes(message) for message in messages]
             self.ui_data.append(UIData(UIDataTopic.GET_CHAT_MESSAGES, True, messages))
 
+        elif mes.mes_purpose == MessagePurpose.REMOVE_USER_FROM_CHAT:
+            chat_name = mes.content.value
+            os.remove(f"user-chats/{chat_name}.json")
+
         else:
             raise ValueError(f"Invalid MessagePurpose \"{mes.mes_purpose=}\".")
 
@@ -427,6 +431,21 @@ class Server(Node):
                 data["chatName"],
                 data["username"],
             )
+
+        # remove a user from a chat
+        elif mes.mes_purpose == MessagePurpose.REMOVE_USER_FROM_CHAT:
+            data = json.loads(mes.content.value)
+            self.__db.remove_user_from_chat(
+                data["chatName"],
+                data["username"],
+            )
+
+            ip_addr = self.__db.get_ip_addr_from_username(data["username"])
+            self.__send_message(Message(
+                MessagePurpose.REMOVE_USER_FROM_CHAT,
+                self.ip_addr,
+                CommandData(data["chatName"]),
+            ), encoding.decode_ip_addr(ip_addr))
 
     def run(self) -> None:
         self.is_running = True

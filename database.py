@@ -392,6 +392,14 @@ class Database:
         with open(f"chats/{chat_name}.json", "w") as f:
             f.write(json.dumps(chat_data, indent=4))
 
+    def remove_user_from_chat(self, chat_name: str, username: str) -> None:
+        chat_data = self.get_chat_data(chat_name)
+        chat_data["members"].remove(username)
+        del chat_data["nicknames"][username]
+
+        with open(f"chats/{chat_name}.json", "w") as f:
+            f.write(json.dumps(chat_data, indent=4))
+
     def debug_display_chat_history(self, chat_name: str) -> None:
         conn = sqlite3.connect("server-db.db")
         c = conn.cursor()
