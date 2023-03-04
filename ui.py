@@ -494,7 +494,6 @@ class UI:
     def __run_chat_admin_settings(
         self,
         chat_name: str,
-        chat_data: dict[str, any],
     ) -> None:
         """
         Allows the user to edit a chat's admin settings.
@@ -503,6 +502,8 @@ class UI:
         self.__update_settings()
 
         while True:
+            chat_data = self.__get_chat_data(chat_name)
+
             os.system("clear")
             self.__print("CHAT ADMIN SETTINGS\n")
             self.__print("1) go back")
@@ -607,7 +608,6 @@ class UI:
     def __run_chat_settings(
         self,
         chat_name: str,
-        chat_data: dict[str, any],
     ) -> None:
         """
         Allows the user to edit a chat's settings.
@@ -616,6 +616,8 @@ class UI:
         self.__update_settings()
 
         while True:
+            chat_data = self.__get_chat_data(chat_name)
+
             os.system("clear")
             self.__print("CHAT SETTINGS\n")
             self.__print("1) go back")
@@ -649,7 +651,7 @@ class UI:
                     self.__print_with_delay("\nThat user isn't in this chat!\n")
 
             elif option == 3 and self.username in chat_data["admins"]:
-                self.__run_chat_admin_settings(chat_name, chat_data)
+                self.__run_chat_admin_settings(chat_name)
 
             else:
                 self.__print_with_delay("\nPlease enter a valid option.\n")
@@ -693,7 +695,7 @@ class UI:
                 continue
 
             elif option == 4:
-                self.__run_chat_settings(chat_name, chat_data)
+                self.__run_chat_settings(chat_name)
 
             else:
                 self.__print_with_delay("\nPlease enter a valid option.\n")
