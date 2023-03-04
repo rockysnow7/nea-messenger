@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from node import Client, Server
 from chat_type import ChatType
 from message import Message, MessagePurpose, TextData, CommandData, Data
-from constants import USERNAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN
+from constants import USERNAME_MAX_LEN, CHAT_NAME_MAX_LEN, MESSAGE_CONTENT_MAX_LEN, VALID_NAME_CHARS
 from ui_data import UIDataTopic
 
 
@@ -75,7 +75,7 @@ class UI:
         for key in self.settings:
             self.settings[key] = self.__get_user_settings(key)
 
-    def __create_user(self) -> bool:
+    def __create_user(self) -> tuple[bool, str]:
         """
         Handles account creation.
 
@@ -85,6 +85,12 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
+        if len(username) > USERNAME_MAX_LEN:
+            return False, f"\nUsername is too long, please use a maximum of {USERNAME_MAX_LEN} characters.\n"
+
+        if any(c for c in username if c not in VALID_NAME_CHARS):
+            return False, f"\nUsername contains invalid characters, please only use letters or digits.\n"
+
         username_padded = username + "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
@@ -103,9 +109,9 @@ class UI:
                 data = self.client.ui_data[i]
                 del self.client.ui_data[i]
                 self.username = username
-                return data.success
+                return data.success, "\nUsername already taken, please choose a different username. If this issue persists, you may already have an account under this IP address, and will need to log into that account.\n"
 
-    def __log_in(self) -> None:
+    def __log_in(self) -> bool:
         """
         Handles logging in.
 
@@ -115,6 +121,10 @@ class UI:
         self.__update_settings()
 
         username = self.__input("username: ")
+        if len(username) > USERNAME_MAX_LEN \
+        or any(c for c in username if c not in VALID_NAME_CHARS):
+            return False
+
         username_padded = username + "\0" * (USERNAME_MAX_LEN - len(username))
         password = self.__input("password: ")
         password_hash = encoding.hash_str(password)
@@ -405,6 +415,14 @@ class UI:
 
             elif type_option == "3":
                 chat_name = self.__input("\nChat name: ")
+                if len(chat_name) > CHAT_NAME_MAX_LEN:
+                    self.__print_with_delay(f"\nChat name is too long, please use a maximum of {CHAT_NAME_MAX_LEN} characters.\n")
+                    continue
+
+                if any(c for c in username if c not in VALID_NAME_CHARS):
+                    self.__print_with_delay("\nChat name has invalid characters, please only use letters or digits.\n")
+                    continue
+
                 chat_names = self.__get_chat_names()
                 if chat_name not in chat_names:
                     all_usernames = self.__get_all_usernames()
@@ -638,6 +656,14 @@ class UI:
                 if username in chat_data["members"]:
                     nickname = self.__input("Nickname: ")
                     if nickname not in chat_data["nicknames"].values():
+                        if len(nickname) > USERNAME_MAX_LEN:
+                            self.__print_with_delay(f"\nNickname is too long, please use a maximum of {USERNAME_MAX_LEN} characters.\n")
+                            continue
+
+                        if any(c for c in nickname if c not in VALID_NAME_CHARS):
+                            self.__print_with_delay("\nUsername contains invalid characters, please only use letters or digits.\n")
+                            continue
+
                         data = json.dumps({
                             "chatName": chat_name,
                             "username": username,
@@ -690,12 +716,15 @@ class UI:
             if option == "2":
                 message = self.__input("Message (leave blank to cancel): ").strip()
                 if message:
-                    self.client.send_message(Message(
-                        MessagePurpose.MESSAGE,
-                        encoding.encode_ip_addr(self.client.ip_addr),
-                        TextData(message),
-                        chat_name=chat_name,
-                    ), tuple(chat_data["pubKey"]))
+                    if len(message) <= MESSAGE_CONTENT_MAX_LEN:
+                        self.client.send_message(Message(
+                            MessagePurpose.MESSAGE,
+                            encoding.encode_ip_addr(self.client.ip_addr),
+                            TextData(message),
+                            chat_name=chat_name,
+                        ), tuple(chat_data["pubKey"]))
+                    else:
+                        self.__print_with_delay(f"\nMessage is too long, please use a maximum of {MESSAGE_CONTENT_MAX_LEN} characters.\n")
 
             elif option == "3":
                 continue
@@ -762,12 +791,13 @@ class UI:
                 break
 
             elif option == "2":
-                if self.__create_user():
+                success, error_message = self.__create_user()
+                if success
                     self.is_logged_in = True
                     self.__print_with_delay("\nCreated user!\n")
                     self.__run_main_menu()
                 else:
-                    self.__print_with_delay("\nUsername already taken, please choose a different username. If this issue persists, you may already have an account under this IP address, and will need to log into that account.\n", 1)
+                    self.__print_with_delay(error_message, 1)
 
             elif option == "3":
                 if self.__log_in():
