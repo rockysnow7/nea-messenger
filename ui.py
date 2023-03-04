@@ -792,7 +792,7 @@ class UI:
 
             elif option == "2":
                 success, error_message = self.__create_user()
-                if success
+                if success:
                     self.is_logged_in = True
                     self.__print_with_delay("\nCreated user!\n")
                     self.__run_main_menu()
