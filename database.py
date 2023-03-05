@@ -286,7 +286,6 @@ class Database:
         sender_username = self.get_username_from_ip_addr(message.sender)
         content = message.content.value
         views = ",".join(message.views)
-        print(f"{views=}")
 
         c.execute(
             f"""
@@ -305,7 +304,6 @@ class Database:
 
         c.execute(f"SELECT rowid, views FROM {chat_name}")
         results = c.fetchall()
-        print(f"{results=}")
         if not results:
             return
 
@@ -322,12 +320,10 @@ class Database:
             return
 
         for i in range(min_rowid, max_rowid + 1):
-            print(f"{i=}")
             views_list = results[i-1][1].split(",")
             views_list = [name for name in views_list if name]
             views_list.append(username)
             views = ",".join(views_list)
-            print(f"{views=}")
             c.execute(
                 f"""
                 UPDATE {chat_name}

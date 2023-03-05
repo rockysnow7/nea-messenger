@@ -496,7 +496,7 @@ class UI:
             message_lines = [
                 f"[{chat_data['nicknames'][message.sender]}] {message.content.value}"
             ]
-            views = [name for name in message.views if name]
+            views = [chat_data["nicknames"][name] for name in message.views if name]
             if views:
                 views = ", ".join(views)
                 message_lines[0] += f"\t[seen by {views}]"

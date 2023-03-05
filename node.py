@@ -267,6 +267,7 @@ class Server(Node):
     def __handle_message(self, mes: Message) -> None:
         # save message
         if mes.mes_purpose == MessagePurpose.MESSAGE:
+            print(f"Received message: {mes.content.value=}, {mes.is_encrypted=}")
             self.__db.save_message(mes)
 
         # create an account
