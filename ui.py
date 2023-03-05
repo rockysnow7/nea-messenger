@@ -419,7 +419,7 @@ class UI:
                     self.__print_with_delay(f"\nChat name is too long, please use a maximum of {CHAT_NAME_MAX_LEN} characters.\n")
                     continue
 
-                if any(c for c in username if c not in VALID_NAME_CHARS):
+                if any(c for c in chat_name if c not in VALID_NAME_CHARS):
                     self.__print_with_delay("\nChat name has invalid characters, please only use letters or digits.\n")
                     continue
 
