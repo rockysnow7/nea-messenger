@@ -20,4 +20,11 @@ def crypt(s: str, key: int) -> str:
     key = int_to_str(key)
     key *= math.ceil(len(s) / len(key))
 
-    return str_xor(s, key)
+    key_ord = [ord(c) for c in key]
+    plaintext = [ord(c) for c in s]
+    result = str_xor(s, key)
+    ciphertext = [ord(c) for c in result]
+    print(f"[vernam]\n{key_ord=}\n{plaintext=}\n{ciphertext=}")
+    input()
+
+    return result
