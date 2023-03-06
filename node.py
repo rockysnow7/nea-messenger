@@ -141,6 +141,8 @@ class Client(Node):
                 self.__diffie_hellman_keys[ip_addr]["b"],
                 self.__diffie_hellman_keys[ip_addr]["p"],
             )
+            print(f"[diffie] bob: {self.__diffie_hellman_keys[ip_addr]=}")
+
             self.send_message_to_ip(Message(
                 MessagePurpose.EXCHANGE,
                 encoding.encode_ip_addr(self.ip_addr),
@@ -157,6 +159,8 @@ class Client(Node):
                 self.__diffie_hellman_keys[ip_addr]["a"],
                 self.__diffie_hellman_keys[ip_addr]["p"],
             )
+            print(f"[diffie] alice: {self.__diffie_hellman_keys[ip_addr]=}")
+
             self.ui_data.append(UIData(
                 UIDataTopic.VERNAM_KEY,
                 True,
